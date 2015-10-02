@@ -1,7 +1,14 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import random
+import sys
 
 import next_permutation
+
+
+def pretty(m):
+    for row in m:
+        print "\t".join(map(str, row))
 
 def sampleFromTarget():
     x = 1.0
@@ -36,7 +43,7 @@ def sumOfDistances(x,y):
 def optimalPairing(x,y):
     n,d = x.shape
     assert y.shape==(n,d)
-    bestDist = 1e50
+    bestDist = np.inf
     bestP = None
     for p in next_permutation.next_permutation(range(n)):
         dist = sumOfDistances(x[p],y)
@@ -46,7 +53,7 @@ def optimalPairing(x,y):
     return p
 
 class LocalMapping(object):
-    KERNEL_SIZE = 0.1 # Ad hoc is an understatement
+    KERNEL_SIZE = 0.25 # Ad hoc is an understatement
     def __init__(self, source, gradient):
         self.source = source
         self.gradient = gradient
@@ -91,6 +98,15 @@ def testGlobalMapping():
 # testLocalMapping()
 # testGlobalMapping()
 
+def drawMapping(ax, f):
+    n = 30
+    window = 2
+    ax.set_xlim((-window, +window))
+    ax.set_ylim((-window, +window))
+    for x in np.linspace(-window, +window, num=n):
+        for y in np.linspace(-window, +window, num=n):
+            x2, y2 = f(np.array([x, y]))
+            ax.arrow(x, y, x2-x, y2-y, head_width=0.05, head_length=0.1, fc='k', ec='k')
 
 # n is the number of data points.
 # e is the dimension of the initial Gaussian.
@@ -106,28 +122,46 @@ def findMapping(n, e, f, learningRate):
     x = np.array([f(i) for i in init])
     p = optimalPairing(x,y)
     x = x[p]
-    return x, learningRate*(y-x)
-
-def pretty(m):
-    for row in m:
-        print "\t".join(map(str, row))
+    # pretty(np.hstack((x,y)))
+    source, gradient = x, learningRate*(y-x)
+    dumpMapping = False
+    if dumpMapping:
+        f = LocalMapping(source, gradient)
+        for xp,yp in zip(x,y):
+            print xp, yp, f(xp), np.linalg.norm(xp-yp), np.linalg.norm(f(xp)-yp)
+    return source, gradient
 
 def iteration():
     d = 2
     e = 2
     n = 8
-    learningRate = 0.1
-    f = GlobalMapping(np.zeros((0,d)), np.zeros((0,d)), None)
-    source, gradient = findMapping(n, e, f, learningRate)
-    pretty(source)
-    print
-    pretty(gradient)
+    learningRate = 0.2
+    minibatchCount = 30
+    plotEvery = 3
+    plotCount = minibatchCount/plotEvery
 
-def permTest():
-    n = 3
-    x = samplesFromTarget(n)
-    for p in next_permutation.next_permutation(range(n)):
-        print x[p]
+    f = GlobalMapping(np.zeros((0,d)), np.zeros((0,d)), None)
+    gaussSample = samplesFromInit(100, d, e)
+
+    fig, axarr = plt.subplots(minibatchCount/plotEvery, 3)
+    fig.set_size_inches(10.0*2, 10.0*plotCount)
+    fig.subplots_adjust(hspace=0.2, wspace=0.2)
+
+    for i in range(minibatchCount):
+        source, gradient = findMapping(n, e, f, learningRate)
+        f = GlobalMapping(source, gradient, f)
+        print i,
+        sys.stdout.flush()
+        if i%plotEvery==0:
+            plotIndex = i/plotEvery
+            drawMapping(axarr[plotIndex][0], f)
+            drawMapping(axarr[plotIndex][1], LocalMapping(source, gradient))
+            sampleFromLearned = np.array([ f(p) for p in gaussSample ])
+            axarr[plotIndex][2].scatter(sampleFromLearned[:,0], sampleFromLearned[:,1])
+
+    print
+    plt.savefig("vis.pdf")
+
 
 def main():
     iteration()
