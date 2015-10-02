@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 import random
 import sys
 
@@ -10,13 +11,21 @@ def pretty(m):
     for row in m:
         print "\t".join(map(str, row))
 
-def sampleFromTarget():
+def halfCircle():
     x = 1.0
     y = 1.0
     while x*x+y*y>1.0:
         x = random.uniform( 0.0, +1.0)
         y = random.uniform(-1.0, +1.0)
     return (x,y)
+
+def wave():
+    x = random.uniform( -math.pi, +math.pi)
+    y = math.sin(x)
+    return (x,y)
+
+def sampleFromTarget():
+    return wave()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
@@ -135,8 +144,8 @@ def iteration():
     d = 2
     e = 2
     n = 8
-    learningRate = 0.2
-    minibatchCount = 30
+    learningRate = 1.0
+    minibatchCount = 9
     plotEvery = 3
     plotCount = minibatchCount/plotEvery
 
@@ -149,6 +158,8 @@ def iteration():
 
     for i in range(minibatchCount):
         source, gradient = findMapping(n, e, f, learningRate)
+        # That's much the same as
+        # f = lambda x: LocalMapping(source, gradient)(f(x))
         f = GlobalMapping(source, gradient, f)
         print i,
         sys.stdout.flush()
@@ -158,6 +169,8 @@ def iteration():
             drawMapping(axarr[plotIndex][1], LocalMapping(source, gradient))
             sampleFromLearned = np.array([ f(p) for p in gaussSample ])
             axarr[plotIndex][2].scatter(sampleFromLearned[:,0], sampleFromLearned[:,1])
+            sampleFromTarget = samplesFromTarget(100)
+            axarr[plotIndex][2].scatter(sampleFromTarget[:,0], sampleFromTarget[:,1], color='red')
 
     print
     plt.savefig("vis.pdf")
