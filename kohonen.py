@@ -5,7 +5,7 @@ import random
 import sys
 
 import next_permutation
-
+import munkres
 
 def pretty(m):
     for row in m:
@@ -25,7 +25,8 @@ def wave():
     return (x,y)
 
 def sampleFromTarget():
-    return wave()
+    # return wave()
+    return halfCircle()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
@@ -49,7 +50,7 @@ def sumOfDistances(x,y):
 # greedy alg is probably more than good enough.
 # Probably we'll have something partially parallel that's even
 # faster than the naive sequential greedy alg.
-def optimalPairing(x,y):
+def slowOptimalPairing(x,y):
     n,d = x.shape
     assert y.shape==(n,d)
     bestDist = np.inf
@@ -59,7 +60,23 @@ def optimalPairing(x,y):
         if dist<bestDist:
             bestDist = dist
             bestP = p
+    return bestP
+
+def optimalPairing(x,y):
+    xL2S = np.sum(np.abs(x)**2,axis=-1)
+    yL2S = np.sum(np.abs(y)**2,axis=-1)
+    xL2SM = np.tile(xL2S, (len(y), 1))
+    yL2SM = np.tile(yL2S, (len(x), 1))
+    squaredDistances = xL2SM + yL2SM.T - 2.0*y.dot(x.T)
+    distances = np.sqrt(squaredDistances+1e-6) # elementwise. +1e-6 is to supress sqrt-of-negative warning.
+    perm = munkres.Munkres().compute(distances)
+    p = []
+    for i,(a,b) in enumerate(perm):
+        assert i==a
+        p.append(b)
+    # assert p==slowOptimalPairing(x,y)
     return p
+
 
 class LocalMapping(object):
     KERNEL_SIZE = 0.25 # Ad hoc is an understatement
@@ -143,10 +160,10 @@ def findMapping(n, e, f, learningRate):
 def iteration():
     d = 2
     e = 2
-    n = 8
+    n = 50
     learningRate = 1.0
-    minibatchCount = 9
-    plotEvery = 3
+    minibatchCount = 90
+    plotEvery = 10
     plotCount = minibatchCount/plotEvery
 
     f = GlobalMapping(np.zeros((0,d)), np.zeros((0,d)), None)
@@ -167,10 +184,10 @@ def iteration():
             plotIndex = i/plotEvery
             drawMapping(axarr[plotIndex][0], f)
             drawMapping(axarr[plotIndex][1], LocalMapping(source, gradient))
-            sampleFromLearned = np.array([ f(p) for p in gaussSample ])
-            axarr[plotIndex][2].scatter(sampleFromLearned[:,0], sampleFromLearned[:,1])
             sampleFromTarget = samplesFromTarget(100)
             axarr[plotIndex][2].scatter(sampleFromTarget[:,0], sampleFromTarget[:,1], color='red')
+            sampleFromLearned = np.array([ f(p) for p in gaussSample ])
+            axarr[plotIndex][2].scatter(sampleFromLearned[:,0], sampleFromLearned[:,1])
 
     print
     plt.savefig("vis.pdf")
