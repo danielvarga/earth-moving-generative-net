@@ -59,12 +59,24 @@ def update(input_var, net, initial, sampled, data):
     train_fn(initial, data)
 
 def sampleAndUpdate(input_var, net, inDim, n):
-    # TODO Refactor, I can't even change the goddamn target distribution in this source file!
-    data = kohonen.samplesFromTarget(n)
-    initial, sampled = sample(net, n, inDim, input_var)
-    permutation = kohonen.optimalPairing(sampled, data)
-    initial = initial[permutation]
-    sampled = sampled[permutation]
+    fudge = 1
+    data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
+
+    initial, sampled = sample(net, n*fudge, inDim, input_var)
+    bipartiteMatchingBased = False
+    if bipartiteMatchingBased:
+        permutation = kohonen.optimalPairing(sampled, data)
+        # If fudge>1 then this is not in fact a permutation, but it's still meaningful.
+        # Never played with it, though.
+        initial = initial[permutation]
+        sampled = sampled[permutation]
+    else:
+        distances = kohonen.distanceMatrix(sampled, data)
+        bestDists = np.argmin(distances, axis=1)
+        initial = initial[bestDists]
+        sampled = sampled[bestDists]
+
+
     update(input_var, net, initial, sampled, data)
 
     output = lasagne.layers.get_output(net)

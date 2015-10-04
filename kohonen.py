@@ -32,8 +32,8 @@ def triangle():
 
 def sampleFromTarget():
     # return wave()
-    return halfCircle()
-    # return triangle()
+    # return halfCircle()
+    return triangle()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
@@ -69,13 +69,17 @@ def slowOptimalPairing(x,y):
             bestP = p
     return bestP
 
-def optimalPairing(x,y):
+def distanceMatrix(x, y):
     xL2S = np.sum(np.abs(x)**2,axis=-1)
     yL2S = np.sum(np.abs(y)**2,axis=-1)
     xL2SM = np.tile(xL2S, (len(y), 1))
     yL2SM = np.tile(yL2S, (len(x), 1))
     squaredDistances = xL2SM + yL2SM.T - 2.0*y.dot(x.T)
     distances = np.sqrt(squaredDistances+1e-6) # elementwise. +1e-6 is to supress sqrt-of-negative warning.
+    return distances
+
+def optimalPairing(x, y):
+    distances = distanceMatrix(x,y)
     perm = munkres.Munkres().compute(distances)
     p = []
     for i,(a,b) in enumerate(perm):
