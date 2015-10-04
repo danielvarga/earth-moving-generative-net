@@ -24,9 +24,16 @@ def wave():
     y = math.sin(x)+random.uniform( -0.2, +0.2)
     return (x,y)
 
+def triangle():
+    x = random.uniform(-1.0, +1.0)
+    y = random.uniform(-1.0, x)
+    return (x,y)
+
+
 def sampleFromTarget():
-    return wave()
-    # return halfCircle()
+    # return wave()
+    return halfCircle()
+    # return triangle()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
