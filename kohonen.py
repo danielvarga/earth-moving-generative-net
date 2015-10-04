@@ -21,12 +21,12 @@ def halfCircle():
 
 def wave():
     x = random.uniform( -math.pi, +math.pi)
-    y = math.sin(x)
+    y = math.sin(x)+random.uniform( -0.2, +0.2)
     return (x,y)
 
 def sampleFromTarget():
-    # return wave()
-    return halfCircle()
+    return wave()
+    # return halfCircle()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
@@ -79,7 +79,7 @@ def optimalPairing(x,y):
 
 
 class LocalMapping(object):
-    KERNEL_SIZE = 0.25 # Ad hoc is an understatement
+    KERNEL_SIZE = 0.33 # Ad hoc is an understatement
     def __init__(self, source, gradient):
         self.source = source
         self.gradient = gradient
@@ -161,6 +161,41 @@ def iteration():
     d = 2
     e = 2
     n = 50
+    learningRate = 0.3
+    minibatchCount = 50
+    plotEvery = 10
+    plotCount = minibatchCount/plotEvery
+
+    f = GlobalMapping(np.zeros((0,d)), np.zeros((0,d)), None)
+    gaussSample = samplesFromInit(100, d, e)
+
+    fig, axarr = plt.subplots(minibatchCount/plotEvery, 3)
+    fig.set_size_inches(10.0*2, 10.0*plotCount)
+    fig.subplots_adjust(hspace=0.2, wspace=0.2)
+
+    for i in range(minibatchCount):
+        source, gradient = findMapping(n, e, f, learningRate)
+        # That's much the same as
+        # f = lambda x: LocalMapping(source, gradient)(f(x))
+        f = GlobalMapping(source, gradient, f)
+        print i,
+        sys.stdout.flush()
+        if i%plotEvery==0:
+            plotIndex = i/plotEvery
+            drawMapping(axarr[plotIndex][0], f)
+            drawMapping(axarr[plotIndex][1], LocalMapping(source, gradient))
+            sampleFromTarget = samplesFromTarget(100)
+            axarr[plotIndex][2].scatter(sampleFromTarget[:,0], sampleFromTarget[:,1], color='red')
+            sampleFromLearned = np.array([ f(p) for p in gaussSample ])
+            axarr[plotIndex][2].scatter(sampleFromLearned[:,0], sampleFromLearned[:,1])
+
+    print
+    plt.savefig("vis.pdf")
+
+def iterationMNIST():
+    d = 784
+    e = 10
+    n = 50
     learningRate = 1.0
     minibatchCount = 90
     plotEvery = 10
@@ -192,9 +227,17 @@ def iteration():
     print
     plt.savefig("vis.pdf")
 
+def mnist():
+    datasetFile = "../rbm/data/mnist.pkl.gz"
+    f = gzip.open(datasetFile, 'rb')
+    datasets = cPickle.load(f)
+    train_set, valid_set, test_set = datasets
+    f.close()
+    return train_set
 
 def main():
     iteration()
 
-main()
 
+if __name__ == "__main__":
+    main()
