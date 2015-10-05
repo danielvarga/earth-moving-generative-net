@@ -116,13 +116,10 @@ def mnist(digit):
     np.random.permutation(input)
     return input
 
-def plotDigit(input_var, net, inDim, name):
-    # create a space to store the image for plotting ( we need to leave
-    # room for the tile_spacing as well)
-    fromGrid = True
+def plotDigits(input_var, net, inDim, name, fromGrid, gridSize):
     if fromGrid:
-        n_x = 100
-        n_y = 100
+        n_x = gridSize
+        n_y = gridSize
         n = n_x*n_y
         initial = []
         for x in np.linspace(-2, +2, n_x):
@@ -133,8 +130,8 @@ def plotDigit(input_var, net, inDim, name):
         data = net_fn(initial)
 
     else:
-        n_x = 10
-        n_y = 10
+        n_x = gridSize
+        n_y = gridSize
         n = n_x*n_y
         initial, data = sampleSource(net, n, inDim, input_var)
 
@@ -146,7 +143,7 @@ def plotDigit(input_var, net, inDim, name):
         x = idx % n_x
         y = idx / n_x
         sample = data[idx].reshape((28,28))
-        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample
+        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample.clip(0,1)
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
@@ -170,8 +167,14 @@ def mainMNIST():
             dataBatch = data[i*minibatchSize:(i+1)*minibatchSize]
             sampleAndUpdate(input_var, net, inDim, n=minibatchSize, data=dataBatch)
         print
-        plotDigit(input_var, net, inDim, "out/"+str(epoch))
-        with open('generator.pkl','w') as f:
+
+        initial, oneSample = sampleSource(net, 1, inDim, input_var)
+        # print oneSample.reshape((28,28))
+
+        plotDigits(input_var, net, inDim, "out/"+str(epoch), fromGrid=True, gridSize=50)
+        plotDigits(input_var, net, inDim, "out/s"+str(epoch), fromGrid=False, gridSize=20)
+
+        with open('som-generator.pkl','w') as f:
             cPickle.dump(net, f)
 
 def main():
