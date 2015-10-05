@@ -78,9 +78,16 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None):
         sampled = sampled[permutation]
     else:
         distances = kohonen.distanceMatrix(sampled, data)
-        bestDists = np.argmin(distances, axis=1)
-        initial = initial[bestDists]
-        sampled = sampled[bestDists]
+        bestDists = np.argmin(distances, axis=0)
+        findGenForData = True
+        if findGenForData:
+            # Counterintuitively, this seems to be better. Understand, verify.
+            bestDists = np.argmin(distances, axis=1)
+            initial = initial[bestDists]
+            sampled = sampled[bestDists]
+        else:
+            bestDists = np.argmin(distances, axis=0)
+            data = data[bestDists]
 
     update(input_var, net, initial, sampled, data)
 
