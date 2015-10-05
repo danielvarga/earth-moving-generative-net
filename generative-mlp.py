@@ -5,7 +5,9 @@ import random
 import math
 
 import numpy as np
+
 import matplotlib.pyplot as plt
+import PIL.Image as Image
 
 import theano
 import theano.tensor as T
@@ -29,7 +31,7 @@ def buildNet(input_var, inDim, hidden, outDim):
 def sampleInitial(n, inDim):
     return np.random.normal(loc=0.0, scale=1.0, size=(n, inDim))
 
-def sample(net, n, inDim, input_var):
+def sampleSource(net, n, inDim, input_var):
     initial = sampleInitial(n, inDim)
     output = lasagne.layers.get_output(net)
     net_fn = theano.function([input_var], output)
@@ -38,11 +40,11 @@ def sample(net, n, inDim, input_var):
 def initialNet():
     return input_var, net
 
-def plot(input_var, net, name):
+def plot(input_var, net, inDim, name):
     n = 1000
-    inDim = 2
-    initial, sampled = sample(net, n, inDim, input_var)
-    assert sampled.shape == (n,2)
+    initial, sampled = sampleSource(net, n, inDim, input_var)
+    assert sampled.shape[0]==n
+    # If feature dim >> 2, and PCA has not happened, it's not too clever to plot the first two dims.
     plt.scatter(sampled.T[0], sampled.T[1])
     plt.savefig(name+".pdf")
     plt.close()
@@ -58,11 +60,15 @@ def update(input_var, net, initial, sampled, data):
     train_fn = theano.function([input_var, data_var], updates=updates)
     train_fn(initial, data)
 
-def sampleAndUpdate(input_var, net, inDim, n):
+def sampleAndUpdate(input_var, net, inDim, n, data=None):
     fudge = 1
-    data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
 
-    initial, sampled = sample(net, n*fudge, inDim, input_var)
+    if data is None:
+        data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
+    else:
+        assert len(data)==n
+
+    initial, sampled = sampleSource(net, n*fudge, inDim, input_var)
     bipartiteMatchingBased = False
     if bipartiteMatchingBased:
         permutation = kohonen.optimalPairing(sampled, data)
@@ -75,7 +81,6 @@ def sampleAndUpdate(input_var, net, inDim, n):
         bestDists = np.argmin(distances, axis=1)
         initial = initial[bestDists]
         sampled = sampled[bestDists]
-
 
     update(input_var, net, initial, sampled, data)
 
@@ -101,9 +106,51 @@ def mnist(digit):
     f.close()
     input, output = train_set
     input = input[output==digit]
-    output = output[output==digit]
+    np.random.permutation(input)
     return input
 
+def plotDigit(input_var, net, inDim, name):
+    # create a space to store the image for plotting ( we need to leave
+    # room for the tile_spacing as well)
+    n_x = 10
+    n_y = 10
+    n = n_x*n_y
+    initial, data = sampleSource(net, n, inDim, input_var)
+    image_data = np.zeros(
+        (29 * n_y + 1, 29 * n_x - 1),
+        dtype='uint8'
+    )
+    for idx in xrange(n):
+        x = idx % n_x
+        y = idx / n_x
+        sample = data[idx].reshape((28,28))
+        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample
+    img = Image.fromarray(image_data)
+    img.save(name+".png")
+
+def mainMNIST():
+    # At least do a PCA, don't let this poor algorithm suffer like this.
+    data = mnist(5)
+    inDim = 10
+    outDim = 28*28
+    hidden = 100
+    input_var = T.matrix('inputs')
+    net = buildNet(input_var, inDim, hidden, outDim)
+    minibatchSize = 50
+    minibatchCount = len(data)/minibatchSize
+    epochCount = 500
+    for epoch in range(epochCount):
+        print "epoch", epoch
+        data = np.random.permutation(data)
+        for i in range(minibatchCount):
+            print i,
+            sys.stdout.flush()
+            dataBatch = data[i*minibatchSize:(i+1)*minibatchSize]
+            sampleAndUpdate(input_var, net, inDim, n=minibatchSize, data=dataBatch)
+        print
+        plotDigit(input_var, net, inDim, "out/"+str(epoch))
+        with open('generator.pkl','w') as f:
+            cPickle.dump(net, f)
 
 def main():
     inDim = 2
@@ -116,8 +163,9 @@ def main():
         print i,
         sys.stdout.flush()
         sampleAndUpdate(input_var, net, inDim, n=minibatchSize)
-        plot(input_var, net, "out/"+str(i))
+        plot(input_var, net, "out/d"+str(i))
     print
 
 if __name__ == "__main__":
-    main()
+    # main()
+    mainMNIST()
