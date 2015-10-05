@@ -119,10 +119,25 @@ def mnist(digit):
 def plotDigit(input_var, net, inDim, name):
     # create a space to store the image for plotting ( we need to leave
     # room for the tile_spacing as well)
-    n_x = 10
-    n_y = 10
-    n = n_x*n_y
-    initial, data = sampleSource(net, n, inDim, input_var)
+    fromGrid = True
+    if fromGrid:
+        n_x = 100
+        n_y = 100
+        n = n_x*n_y
+        initial = []
+        for x in np.linspace(-2, +2, n_x):
+            for y in np.linspace(-2, +2, n_y):
+                initial.append([x, y, 0.0])
+        output = lasagne.layers.get_output(net)
+        net_fn = theano.function([input_var], output)
+        data = net_fn(initial)
+
+    else:
+        n_x = 10
+        n_y = 10
+        n = n_x*n_y
+        initial, data = sampleSource(net, n, inDim, input_var)
+
     image_data = np.zeros(
         (29 * n_y + 1, 29 * n_x - 1),
         dtype='uint8'
@@ -138,7 +153,7 @@ def plotDigit(input_var, net, inDim, name):
 def mainMNIST():
     # At least do a PCA, don't let this poor algorithm suffer like this.
     data = mnist(5)
-    inDim = 10
+    inDim = 3
     outDim = 28*28
     hidden = 100
     input_var = T.matrix('inputs')
