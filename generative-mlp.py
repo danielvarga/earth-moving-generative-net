@@ -101,8 +101,8 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
     # We throw away data to combine the advantages of big n with small minibatch size.
     # Don't forget that this means that in an epoch we only see 1/overSampleFactor
     # fraction of the dataset. There must be a better way.
-    overSampleFactor = 4
-    subSample = np.random.choice(len(data), len(data)/4)
+    overSamplingFactor = 1
+    subSample = np.random.choice(len(data), len(data)/overSamplingFactor)
     initial = initial[subSample]
     sampled = sampled[subSample]
     data = data[subSample]
