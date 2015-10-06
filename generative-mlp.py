@@ -96,6 +96,17 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
             bestDists = np.argmin(distances, axis=0)
             data = data[bestDists]
 
+    # The idea is that we big n is good because matches are close,
+    # but big n is also bad because large minibatch sizes are generally bad.
+    # We throw away data to combine the advantages of big n with small minibatch size.
+    # Don't forget that this means that in an epoch we only see 1/overSampleFactor
+    # fraction of the dataset. There must be a better way.
+    overSampleFactor = 4
+    subSample = np.random.choice(len(data), len(data)/4)
+    initial = initial[subSample]
+    sampled = sampled[subSample]
+    data = data[subSample]
+
     update(input_var, net, initial, sampled, data)
 
     output = lasagne.layers.get_output(net)
@@ -169,7 +180,7 @@ def mainMNIST():
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    data = mnist()
+    data = mnist(6)
 
     inDim = 3
     outDim = 28*28
