@@ -36,7 +36,12 @@ def buildNet(input_var, inDim, hidden, outDim):
     return l_out
 
 def sampleInitial(n, inDim):
-    return np.random.normal(loc=0.0, scale=1.0, size=(n, inDim))
+    discreteDim = 4 # Hardwired for now.
+    continuousDim = inDim - discreteDim
+    assert continuousDim>=0
+    continuous = np.random.normal(loc=0.0, scale=1.0, size=(n, continuousDim))
+    discrete = np.random.randint(0, 2, (n, discreteDim))
+    return np.hstack((continuous, discrete))
 
 def sampleSource(net, n, inDim, input_var):
     initial = sampleInitial(n, inDim)
@@ -96,11 +101,11 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
             bestDists = np.argmin(distances, axis=0)
             data = data[bestDists]
 
-    # The idea is that we big n is good because matches are close,
+    # The idea is that big n is good because matches are close,
     # but big n is also bad because large minibatch sizes are generally bad.
     # We throw away data to combine the advantages of big n with small minibatch size.
-    # Don't forget that this means that in an epoch we only see 1/overSampleFactor
-    # fraction of the dataset. There must be a better way.
+    # Don't forget that this means that in an epoch we only see 1/overSamplingFactor
+    # fraction of the dataset. There must be a less heavy-handed way.
     overSamplingFactor = 1
     subSample = np.random.choice(len(data), len(data)/overSamplingFactor)
     initial = initial[subSample]
@@ -180,9 +185,10 @@ def mainMNIST():
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    data = mnist(6)
+    data = mnist()
 
-    inDim = 3
+    discreteDim = 4
+    inDim = 3+discreteDim
     outDim = 28*28
     hidden = 100
     input_var = T.matrix('inputs')
