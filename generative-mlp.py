@@ -111,7 +111,7 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
             plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
         plt.savefig("grad.pdf")
 
-def mnist(digit):
+def mnist(digit=None):
     np.random.seed(1)
     datasetFile = "../rbm/data/mnist.pkl.gz"
     f = gzip.open(datasetFile, 'rb')
@@ -119,7 +119,8 @@ def mnist(digit):
     train_set, valid_set, test_set = datasets
     f.close()
     input, output = train_set
-    input = input[output==digit]
+    if digit is not None:
+        input = input[output==digit]
     np.random.permutation(input)
     return input
 
@@ -168,7 +169,7 @@ def mainMNIST():
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    data = mnist(6)
+    data = mnist()
 
     inDim = 3
     outDim = 28*28
