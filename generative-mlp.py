@@ -1,6 +1,7 @@
 import cPickle
 import gzip
 import sys
+import os
 import random
 import math
 
@@ -14,6 +15,12 @@ import theano.tensor as T
 import lasagne
 
 import kohonen
+
+
+def logg(*ss):
+    s = " ".join(map(str,ss))
+    sys.stderr.write(s+"\n")
+
 
 def buildNet(input_var, inDim, hidden, outDim):
     l_in = lasagne.layers.InputLayer(shape=(None, inDim),
@@ -60,15 +67,15 @@ def update(input_var, net, initial, sampled, data):
     train_fn = theano.function([input_var, data_var], updates=updates)
     train_fn(initial, data)
 
-def sampleAndUpdate(input_var, net, inDim, n, data=None):
-    fudge = 1
-
+def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
         assert len(data)==n
+    if m is None:
+        m = n
 
-    initial, sampled = sampleSource(net, n*fudge, inDim, input_var)
+    initial, sampled = sampleSource(net, m, inDim, input_var)
     bipartiteMatchingBased = False
     if bipartiteMatchingBased:
         permutation = kohonen.optimalPairing(sampled, data)
@@ -78,13 +85,13 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None):
         sampled = sampled[permutation]
     else:
         distances = kohonen.distanceMatrix(sampled, data)
-        bestDists = np.argmin(distances, axis=0)
         findGenForData = True
         if findGenForData:
             # Counterintuitively, this seems to be better. Understand, verify.
             bestDists = np.argmin(distances, axis=1)
             initial = initial[bestDists]
             sampled = sampled[bestDists]
+            print distances.min(axis=1).sum()
         else:
             bestDists = np.argmin(distances, axis=0)
             data = data[bestDists]
@@ -116,20 +123,25 @@ def mnist(digit):
     np.random.permutation(input)
     return input
 
-def plotDigits(input_var, net, inDim, name, fromGrid, gridSize):
+def plotDigits(input_var, net, inDim, name, fromGrid, gridSize, plane=None):
     if fromGrid:
+        if plane is None:
+            plane = (0, 1)
         n_x = gridSize
         n_y = gridSize
         n = n_x*n_y
         initial = []
         for x in np.linspace(-2, +2, n_x):
             for y in np.linspace(-2, +2, n_y):
-                initial.append([x, y, 0.0])
+                v = np.zeros(inDim)
+                v[plane[0]] = x
+                v[plane[1]] = y
+                initial.append(v)
         output = lasagne.layers.get_output(net)
         net_fn = theano.function([input_var], output)
         data = net_fn(initial)
-
     else:
+        assert plane is None, "unsupported"
         n_x = gridSize
         n_y = gridSize
         n = n_x*n_y
@@ -148,14 +160,22 @@ def plotDigits(input_var, net, inDim, name, fromGrid, gridSize):
     img.save(name+".png")
 
 def mainMNIST():
-    # At least do a PCA, don't let this poor algorithm suffer like this.
-    data = mnist(5)
+    expName = sys.argv[1]
+    minibatchSize = int(sys.argv[2])
+    try:
+        expName = expName.rstrip("/")
+        os.mkdir(expName)
+    except OSError:
+        logg("Warning: target directory already exists, or can't be created.")
+
+    data = mnist(6)
+
     inDim = 3
     outDim = 28*28
     hidden = 100
     input_var = T.matrix('inputs')
     net = buildNet(input_var, inDim, hidden, outDim)
-    minibatchSize = 50
+
     minibatchCount = len(data)/minibatchSize
     epochCount = 500
     for epoch in range(epochCount):
@@ -171,10 +191,12 @@ def mainMNIST():
         initial, oneSample = sampleSource(net, 1, inDim, input_var)
         # print oneSample.reshape((28,28))
 
-        plotDigits(input_var, net, inDim, "out/"+str(epoch), fromGrid=True, gridSize=50)
-        plotDigits(input_var, net, inDim, "out/s"+str(epoch), fromGrid=False, gridSize=20)
+        plotDigits(input_var, net, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
+        plotDigits(input_var, net, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
+        plotDigits(input_var, net, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
+        plotDigits(input_var, net, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
 
-        with open('som-generator.pkl','w') as f:
+        with open(expName+"/som-generator.pkl", 'w') as f:
             cPickle.dump(net, f)
 
 def main():
