@@ -36,12 +36,9 @@ def buildNet(input_var, inDim, hidden, outDim):
     return l_out
 
 def sampleInitial(n, inDim):
-    discreteDim = 4 # Hardwired for now.
-    continuousDim = inDim - discreteDim
-    assert continuousDim>=0
-    continuous = np.random.normal(loc=0.0, scale=1.0, size=(n, continuousDim))
-    discrete = np.random.randint(0, 2, (n, discreteDim))
-    return np.hstack((continuous, discrete))
+    discrete = np.random.randint(0, 2, (n, inDim))
+    continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
+    return discrete + continuous
 
 def sampleSource(net, n, inDim, input_var):
     initial = sampleInitial(n, inDim)
@@ -187,8 +184,7 @@ def mainMNIST():
 
     data = mnist()
 
-    discreteDim = 4
-    inDim = 3+discreteDim
+    inDim = 4
     outDim = 28*28
     hidden = 100
     input_var = T.matrix('inputs')
