@@ -196,7 +196,7 @@ def mainMNIST():
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    data = mnist(5, torusHack=True)
+    data = mnist()
 
     inDim = 4
     outDim = 28*28
