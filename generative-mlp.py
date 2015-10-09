@@ -36,6 +36,12 @@ def buildNet(input_var, inDim, hidden, outDim):
     return l_out
 
 def sampleInitial(n, inDim):
+    circles1 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
+    circles2 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
+    circles1 /= np.linalg.norm(circles1, axis=1)[:, np.newaxis]
+    circles2 /= np.linalg.norm(circles2, axis=1)[:, np.newaxis]
+    continuous = np.hstack((circles1, circles2))
+    return continuous
     discrete = np.random.randint(0, 2, (n, inDim))
     continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
     return continuous # + discrete
@@ -210,7 +216,7 @@ def mainMNIST():
             sampleAndUpdate(input_var, net, inDim, n=minibatchSize, data=dataBatch)
         print
 
-        initial, oneSample = sampleSource(net, 1, inDim, input_var)
+        # initial, oneSample = sampleSource(net, 1, inDim, input_var)
         # print oneSample.reshape((28,28))
 
         plotDigits(input_var, net, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
