@@ -38,7 +38,7 @@ def buildNet(input_var, inDim, hidden, outDim):
 def sampleInitial(n, inDim):
     discrete = np.random.randint(0, 2, (n, inDim))
     continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
-    return discrete + continuous
+    return continuous # + discrete
 
 def sampleSource(net, n, inDim, input_var):
     initial = sampleInitial(n, inDim)
@@ -121,7 +121,7 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
             plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
         plt.savefig("grad.pdf")
 
-def mnist(digit=None):
+def mnist(digit=None, torusHack=False):
     np.random.seed(1)
     datasetFile = "../rbm/data/mnist.pkl.gz"
     f = gzip.open(datasetFile, 'rb')
@@ -131,6 +131,17 @@ def mnist(digit=None):
     input, output = train_set
     if digit is not None:
         input = input[output==digit]
+    if torusHack:
+        sample = input[0].reshape((28, 28))
+        inputRows = []
+        for dx in range(28):
+            for dy in range(28):
+                s = sample.copy()
+                s = np.hstack((s[:, dy:], s[:, :dy]))
+                s = np.vstack((s[dx:, :], s[:dx, :]))
+                inputRows.append(s.reshape(28*28))
+        input = np.array(inputRows)
+        input = np.vstack([[input]*10])
     np.random.permutation(input)
     return input
 
@@ -179,7 +190,7 @@ def mainMNIST():
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    data = mnist()
+    data = mnist(5, torusHack=True)
 
     inDim = 4
     outDim = 28*28
