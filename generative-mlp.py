@@ -27,11 +27,11 @@ def buildNet(input_var, inDim, hidden, outDim):
                                      input_var=input_var)
     l_hid = lasagne.layers.DenseLayer(
             l_in, num_units=hidden,
-            nonlinearity=lasagne.nonlinearities.tanh,
+            nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     l_out = lasagne.layers.DenseLayer(
             l_hid, num_units=outDim,
-            nonlinearity=lasagne.nonlinearities.tanh,
+            nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     return l_out
 
