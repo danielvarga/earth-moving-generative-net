@@ -28,11 +28,11 @@ def buildNet(input_var, inDim, hidden, outDim):
     l_hid = lasagne.layers.DenseLayer(
             l_in, num_units=hidden,
             nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.GlorotUniform())
+            W=lasagne.init.GlorotUniform(gain='relu'))
     l_out = lasagne.layers.DenseLayer(
             l_hid, num_units=outDim,
             nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.GlorotUniform())
+            W=lasagne.init.GlorotUniform(gain='relu'))
     return l_out
 
 def sampleInitial(n, inDim):
@@ -45,9 +45,6 @@ def sampleSource(net, n, inDim, input_var):
     output = lasagne.layers.get_output(net)
     net_fn = theano.function([input_var], output)
     return initial, net_fn(initial)
-
-def initialNet():
-    return input_var, net
 
 def plot(input_var, net, inDim, name):
     n = 1000
@@ -169,7 +166,7 @@ def plotDigits(input_var, net, inDim, name, fromGrid, gridSize, plane=None):
         x = idx % n_x
         y = idx / n_x
         sample = data[idx].reshape((28,28))
-        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample.clip(0,1)
+        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample.clip(0, 0.99999)
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
