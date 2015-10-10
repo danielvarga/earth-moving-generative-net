@@ -22,21 +22,30 @@ def logg(*ss):
     sys.stderr.write(s+"\n")
 
 
-def buildNet(input_var, inDim, hidden, outDim):
+def buildNet(input_var, inDim, hidden, outDim, useReLU):
+    if useReLU:
+        nonlinearity = lasagne.nonlinearities.rectify
+        gain = 'relu'
+    else:
+        nonlinearity = lasagne.nonlinearities.tanh
+        gain = 1.0
+
     l_in = lasagne.layers.InputLayer(shape=(None, inDim),
                                      input_var=input_var)
     l_hid = lasagne.layers.DenseLayer(
             l_in, num_units=hidden,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.GlorotUniform(gain='relu'))
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
     l_out = lasagne.layers.DenseLayer(
             l_hid, num_units=outDim,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.GlorotUniform(gain='relu'))
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
     return l_out
 
 def sampleInitial(n, inDim):
     circles1 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
+    return circles1
+
     circles2 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
     circles1 /= np.linalg.norm(circles1, axis=1)[:, np.newaxis]
     circles2 /= np.linalg.norm(circles2, axis=1)[:, np.newaxis]
@@ -187,22 +196,14 @@ def plotDigits(input_var, net, inDim, name, fromGrid, gridSize, plane=None):
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
-def mainMNIST():
-    expName = sys.argv[1]
-    minibatchSize = int(sys.argv[2])
-    try:
-        expName = expName.rstrip("/")
-        os.mkdir(expName)
-    except OSError:
-        logg("Warning: target directory already exists, or can't be created.")
-
+def mainMNIST(expName, minibatchSize):
     data = mnist()
 
     inDim = 4
     outDim = 28*28
     hidden = 100
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, inDim, hidden, outDim)
+    net = buildNet(input_var, inDim, hidden, outDim, useReLU=True)
 
     minibatchCount = len(data)/minibatchSize
     epochCount = 500
@@ -227,20 +228,33 @@ def mainMNIST():
         with open(expName+"/som-generator.pkl", 'w') as f:
             cPickle.dump(net, f)
 
-def main():
+def mainLowDim(expName, minibatchSize):
     inDim = 2
     outDim = 2
     hidden = 100
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, inDim, hidden, outDim)
-    minibatchSize = 50
+    net = buildNet(input_var, inDim, hidden, outDim, useReLU=False)
     for i in range(100):
         print i,
         sys.stdout.flush()
         sampleAndUpdate(input_var, net, inDim, n=minibatchSize)
-        plot(input_var, net, "out/d"+str(i))
+        plot(input_var, net, inDim, expName+"/d"+str(i))
     print
 
+def main():
+    expName = sys.argv[1]
+    minibatchSize = int(sys.argv[2])
+    try:
+        expName = expName.rstrip("/")
+        os.mkdir(expName)
+    except OSError:
+        logg("Warning: target directory already exists, or can't be created.")
+    doMNIST = False
+    if doMNIST:
+        mainMNIST(expName, minibatchSize)
+    else:
+        mainLowDim(expName, minibatchSize)
+
 if __name__ == "__main__":
-    # main()
-    mainMNIST()
+    main()
+    # mainMNIST()

@@ -32,8 +32,8 @@ def triangle():
 
 def sampleFromTarget():
     # return wave()
-    # return halfCircle()
-    return triangle()
+    return halfCircle()
+    # return triangle()
 
 def samplesFromTarget(n):
     return np.array([sampleFromTarget() for i in xrange(n)])
