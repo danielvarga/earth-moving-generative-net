@@ -22,13 +22,14 @@ def logg(*ss):
     sys.stderr.write(s+"\n")
 
 
-def buildNet(input_var, inDim, hidden, outDim, useReLU):
+def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
     if useReLU:
         nonlinearity = lasagne.nonlinearities.rectify
         gain = 'relu'
     else:
         nonlinearity = lasagne.nonlinearities.tanh
         gain = 1.0
+    assert layerNum in (2,3)
 
     l_in = lasagne.layers.InputLayer(shape=(None, inDim),
                                      input_var=input_var)
@@ -36,28 +37,26 @@ def buildNet(input_var, inDim, hidden, outDim, useReLU):
             l_in, num_units=hidden,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
-    l_hid2 = lasagne.layers.DenseLayer(
+    if layerNum==2:
+        l_out = lasagne.layers.DenseLayer(
+            l_hid, num_units=outDim,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+    else:
+        l_hid2 = lasagne.layers.DenseLayer(
             l_hid, num_units=hidden,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
-    l_out = lasagne.layers.DenseLayer(
+        l_out = lasagne.layers.DenseLayer(
             l_hid2, num_units=outDim,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
     return l_out
 
 def sampleInitial(n, inDim):
-    circles1 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
-    return circles1
-
-    circles2 = np.random.normal(loc=0.0, scale=1.0, size=(n, 2))
-    circles1 /= np.linalg.norm(circles1, axis=1)[:, np.newaxis]
-    circles2 /= np.linalg.norm(circles2, axis=1)[:, np.newaxis]
-    continuous = np.hstack((circles1, circles2))
-    return continuous
     discrete = np.random.randint(0, 2, (n, inDim))
     continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
-    return continuous # + discrete
+    return discrete + continuous
 
 def sampleSource(net, n, inDim, input_var):
     initial = sampleInitial(n, inDim)
@@ -81,7 +80,7 @@ def update(input_var, net, initial, sampled, data):
     loss = lasagne.objectives.squared_error(output, data_var).mean()
     params = lasagne.layers.get_all_params(net, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.9, momentum=0.1)
+            loss, params, learning_rate=0.2, momentum=0.5)
     train_fn = theano.function([input_var, data_var], updates=updates)
     train_fn(initial, data)
 
@@ -103,7 +102,7 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
         sampled = sampled[permutation]
     else:
         distances = kohonen.distanceMatrix(sampled, data)
-        findGenForData = False
+        findGenForData = True
         if findGenForData:
             # Counterintuitively, this seems to be better. Understand, verify.
             bestDists = np.argmin(distances, axis=1)
@@ -151,6 +150,7 @@ def mnist(digit=None, torusHack=False):
     if digit is not None:
         input = input[output==digit]
     if torusHack:
+        # This is a SINGLE sample, translated and multiplied.
         sample = input[0].reshape((28, 28))
         inputRows = []
         for dx in range(28):
@@ -206,8 +206,9 @@ def mainMNIST(expName, minibatchSize):
     inDim = 4
     outDim = 28*28
     hidden = 100
+    layerNum = 2
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, inDim, hidden, outDim, useReLU=True)
+    net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=True)
 
     minibatchCount = len(data)/minibatchSize
     epochCount = 500
@@ -235,9 +236,10 @@ def mainMNIST(expName, minibatchSize):
 def mainLowDim(expName, minibatchSize):
     inDim = 2
     outDim = 2
+    layerNum = 3
     hidden = 100
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, inDim, hidden, outDim, useReLU=False)
+    net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=False)
     for i in range(100):
         print i,
         sys.stdout.flush()
@@ -253,7 +255,7 @@ def main():
         os.mkdir(expName)
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
-    doMNIST = False
+    doMNIST = True
     if doMNIST:
         mainMNIST(expName, minibatchSize)
     else:
@@ -261,4 +263,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # mainMNIST()
