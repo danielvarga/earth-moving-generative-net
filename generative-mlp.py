@@ -36,8 +36,12 @@ def buildNet(input_var, inDim, hidden, outDim, useReLU):
             l_in, num_units=hidden,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
+    l_hid2 = lasagne.layers.DenseLayer(
+            l_hid, num_units=hidden,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
     l_out = lasagne.layers.DenseLayer(
-            l_hid, num_units=outDim,
+            l_hid2, num_units=outDim,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
     return l_out
@@ -77,7 +81,7 @@ def update(input_var, net, initial, sampled, data):
     loss = lasagne.objectives.squared_error(output, data_var).mean()
     params = lasagne.layers.get_all_params(net, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.2, momentum=0.5)
+            loss, params, learning_rate=0.9, momentum=0.1)
     train_fn = theano.function([input_var, data_var], updates=updates)
     train_fn(initial, data)
 
@@ -99,7 +103,7 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
         sampled = sampled[permutation]
     else:
         distances = kohonen.distanceMatrix(sampled, data)
-        findGenForData = True
+        findGenForData = False
         if findGenForData:
             # Counterintuitively, this seems to be better. Understand, verify.
             bestDists = np.argmin(distances, axis=1)
