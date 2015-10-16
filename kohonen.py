@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import math
 import random
 import sys
+import cPickle
+import gzip
 
 import next_permutation
 import munkres

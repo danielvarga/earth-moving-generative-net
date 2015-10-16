@@ -27,6 +27,15 @@ def mnist():
     print "mu, sigma:", mu, sigma
     return X, mu, sigma
 
+# TODO I don't think that .eval() is how this should work.
+def get_output_from_nn(last_layer, X):
+    indices = np.arange(128, X.shape[0], 128)
+    # not splitting into batches can cause a memory error
+    X_batches = np.split(X, indices)
+    out = []
+    for count, X_batch in enumerate(X_batches):
+        out.append( layers.get_output(last_layer, X_batch).eval() )
+    return np.vstack(out)
 
 class Autoencoder:
     # sigma and mu should be trained on the same corpus as the autoencoder itself.
@@ -43,7 +52,6 @@ class Autoencoder:
     # from unnormalized to unnormalized [0,1] MNIST.
     # ae is trained on normalized MNIST data.
     # For 0-1 clipped digits this should be close to the identity function.
-    # only applicable before calling split() !
     def predict(self, X):
         assert not self.afterSplit
         return self.ae.predict((X - self.mu) / self.sigma).reshape(-1, 28, 28) * self.sigma + self.mu
@@ -59,7 +67,6 @@ class Autoencoder:
         next_layer.input_layer = new_layer
         self.afterSplit = True
 
-    # only applicable after calling split() !
     def decode(self, X):
         assert self.afterSplit
         return get_output_from_nn(self.final_layer, X) * self.sigma + self.mu
@@ -95,19 +102,6 @@ def get_random_images(X_in, X_pred):
     new_im.paste(rec_image, (original_image.size[0],0))
     new_im.save('test1.png', format="PNG")
 
-def get_output_from_nn(last_layer, X):
-    indices = np.arange(128, X.shape[0], 128)
-    sys.stdout.flush()
-
-    # not splitting into batches can cause a memory error
-    X_batches = np.split(X, indices)
-    out = []
-    for count, X_batch in enumerate(X_batches):
-        # out.append(last_layer.get_output(X_batch).eval())
-        out.append( layers.get_output(last_layer, X_batch).eval() )
-        sys.stdout.flush()
-    return np.vstack(out)
-
 def main():
     X_train, mu, sigma = mnist()
 
@@ -126,6 +120,8 @@ def main():
 
     get_random_images(X_train, X_pred)
 
+    autoencoder.split()
+
     X_encoded = autoencoder.encode(X_train)
 
     x0 = X_encoded[0]
@@ -133,8 +129,6 @@ def main():
     stepCount = 100
     intervalBase = np.linspace(1, 0, num=stepCount)
     intervalEncoded = np.multiply.outer(intervalBase, x0)+np.multiply.outer(1.0-intervalBase, x1)
-
-    autoencoder.split()
 
     X_decoded = autoencoder.decode(intervalEncoded)
 
