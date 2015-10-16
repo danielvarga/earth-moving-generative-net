@@ -14,44 +14,59 @@ from nnbase.utils import FlipBatchIterator
 ### so had to manually copy the file I wanted to this folder
 import nnbase.shape as shape
 
-mnistFile = "../rbm/data/mnist.pkl.gz"
-f = gzip.open(mnistFile, 'rb')
-train_set, valid_set, test_set = cPickle.load(f)
-f.close()
-X, y = train_set
-X = np.rint(X * 256).astype(np.int).reshape((-1, 1, 28, 28))  # convert to (0,255) int range (we'll do our own scaling)
-mu, sigma = np.mean(X.flatten()), np.std(X.flatten())
+def mnist():
+    mnistFile = "../rbm/data/mnist.pkl.gz"
+    f = gzip.open(mnistFile, 'rb')
+    train_set, valid_set, test_set = cPickle.load(f)
+    f.close()
+    X, y = train_set
+    X = X.astype(np.float64).reshape((-1, 1, 28, 28))
+    # sigma and mu should be trained on the same corpus as the autoencoder itself.
+    # This is error-prone!
+    mu, sigma = np.mean(X), np.std(X)
+    print "mu, sigma:", mu, sigma
+    return X, mu, sigma
 
-X_train = X.astype(np.float64)
-X_train = (X_train - mu) / sigma
 
-# we need our target to be 1 dimensional
-X_out = X_train.reshape((X_train.shape[0], -1))
+class Autoencoder:
+    # sigma and mu should be trained on the same corpus as the autoencoder itself.
+    # This is error-prone!
+    def __init__(self, ae, mu, sigma):
+        self.ae = ae
+        self.mu = mu
+        self.sigma = sigma
 
-autoencoderFile = "../lasagne-demo/conv_ae.pkl"
-ae = cPickle.load(open(autoencoderFile, 'r'))
+        self.encode_layer_index = map(lambda pair : pair[0], self.ae.layers).index('encode_layer')
+        self.encode_layer = self.ae.get_all_layers()[self.encode_layer_index]
+        self.afterSplit = False
 
-sampleIndices = map(int, sys.argv[1:])
-assert len(sampleIndices)==2, "the tool expects two sample indices"
-# OMG what a mess, refactor refactor.
-X_train = X_train[sampleIndices]
-X = X[sampleIndices]
+    # from unnormalized to unnormalized [0,1] MNIST.
+    # ae is trained on normalized MNIST data.
+    # For 0-1 clipped digits this should be close to the identity function.
+    # only applicable before calling split() !
+    def predict(self, X):
+        assert not self.afterSplit
+        return self.ae.predict((X - self.mu) / self.sigma).reshape(-1, 28, 28) * self.sigma + self.mu
 
-X_train_pred = ae.predict(X_train).reshape(-1, 28, 28) * sigma + mu
-print "ended prediction"
-sys.stdout.flush()
-X_pred = np.rint(X_train_pred).astype(int)
-X_pred = np.clip(X_pred, a_min = 0, a_max = 255)
-X_pred = X_pred.astype('uint8')
-print X_pred.shape , X.shape
+    def encode(self, X):
+        return get_output_from_nn(self.encode_layer, (X-self.mu)/self.sigma)
 
-# <codecell>
+    # N.B after we do this, we won't be able to use the original autoencoder , as the layers are broken up
+    def split(self):
+        next_layer = self.ae.get_all_layers()[self.encode_layer_index + 1]
+        self.final_layer = self.ae.get_all_layers()[-1]
+        new_layer = layers.InputLayer(shape = (None, self.encode_layer.num_units))
+        next_layer.input_layer = new_layer
+        self.afterSplit = True
 
-###  show random inputs / outputs side by side
+    # only applicable after calling split() !
+    def decode(self, X):
+        assert self.afterSplit
+        return get_output_from_nn(self.final_layer, X) * self.sigma + self.mu
 
 def get_picture_array(X, index):
     array = X[index].reshape(28,28)
-    array = np.clip(array, a_min = 0, a_max = 255)
+    array = np.clip(array*255, a_min = 0, a_max = 255)
     return  array.repeat(4, axis = 0).repeat(4, axis = 1).astype(np.uint8())
 
 def get_picture_array_better(X, n_x, n_y, name):
@@ -65,30 +80,20 @@ def get_picture_array_better(X, n_x, n_y, name):
         x = idx % n_x
         y = idx / n_x
         sample = X[idx].reshape((28,28))
-        image_data[29*x:29*x+28, 29*y:29*y+28] = sample.clip(0, 255)
+        image_data[29*x:29*x+28, 29*y:29*y+28] = (255*sample).clip(0, 255)
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
-def get_random_images():
+def get_random_images(X_in, X_pred):
     index = np.random.randint(len(X_pred))
     print index
-    # N.B. This line uses global X not X_pred:
-    original_image = Image.fromarray(get_picture_array(X, index))
+    original_image = Image.fromarray(get_picture_array(X_in, index))
     new_size = (original_image.size[0] * 2, original_image.size[1])
     new_im = Image.new('L', new_size)
     new_im.paste(original_image, (0,0))
     rec_image = Image.fromarray(get_picture_array(X_pred, index))
     new_im.paste(rec_image, (original_image.size[0],0))
     new_im.save('test1.png', format="PNG")
-
-get_random_images()
-
-# <codecell>
-
-## we find the encode layer from our ae, and use it to define an encoding function
-
-encode_layer_index = map(lambda pair : pair[0], ae.layers).index('encode_layer')
-encode_layer = ae.get_all_layers()[encode_layer_index]
 
 def get_output_from_nn(last_layer, X):
     indices = np.arange(128, X.shape[0], 128)
@@ -103,47 +108,38 @@ def get_output_from_nn(last_layer, X):
         sys.stdout.flush()
     return np.vstack(out)
 
+def main():
+    X_train, mu, sigma = mnist()
 
-def encode_input(X):
-    return get_output_from_nn(encode_layer, X)
+    autoencoderFile = "../lasagne-demo/conv_ae.pkl"
+    ae_raw = cPickle.load(open(autoencoderFile, 'r'))
 
-X_encoded = encode_input(X_train)
+    autoencoder = Autoencoder(ae_raw, mu, sigma)
 
-x0 = X_encoded[0]
-x1 = X_encoded[1]
-stepCount = 100
-intervalBase = np.linspace(1, 0, num=stepCount)
-intervalEncoded = np.multiply.outer(intervalBase, x0)+np.multiply.outer(1.0-intervalBase, x1)
+    sampleIndices = map(int, sys.argv[1:])
+    assert len(sampleIndices)==2, "the tool expects two sample indices"
+    X_train = X_train[sampleIndices]
 
-# <codecell>
+    X_pred = autoencoder.predict(X_train)
+    print "ended prediction"
+    sys.stdout.flush()
 
-next_layer = ae.get_all_layers()[encode_layer_index + 1]
-final_layer = ae.get_all_layers()[-1]
-new_layer = layers.InputLayer(shape = (None, encode_layer.num_units))
+    get_random_images(X_train, X_pred)
 
-# N.B after we do this, we won't be able to use the original autoencoder , as the layers are broken up
-next_layer.input_layer = new_layer
+    X_encoded = autoencoder.encode(X_train)
 
-def decode_encoded_input(X):
-    return get_output_from_nn(final_layer, X)
+    x0 = X_encoded[0]
+    x1 = X_encoded[1]
+    stepCount = 100
+    intervalBase = np.linspace(1, 0, num=stepCount)
+    intervalEncoded = np.multiply.outer(intervalBase, x0)+np.multiply.outer(1.0-intervalBase, x1)
 
-# X_decoded = decode_encoded_input(X_encoded) * sigma + mu
-X_decoded = decode_encoded_input(intervalEncoded) * sigma + mu
-# ^^^^^
+    autoencoder.split()
 
-get_picture_array_better(X_decoded, 10, 10, "interval")
+    X_decoded = autoencoder.decode(intervalEncoded)
+
+    get_picture_array_better(X_decoded, 10, 10, "interval")
 
 
-X_decoded = np.rint(X_decoded ).astype(int)
-X_decoded = np.clip(X_decoded, a_min = 0, a_max = 255)
-X_decoded  = X_decoded.astype('uint8')
-print X_decoded.shape
-
-### check it worked :
-
-pic_array = get_picture_array(X_decoded, np.random.randint(len(X_decoded)))
-image = Image.fromarray(pic_array)
-image.save('test2.png', format="PNG")
-# IPImage('test.png')
-
-# <codecell>
+if __name__ == "__main__":
+    main()
