@@ -1,31 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from lasagne import layers
-from lasagne.updates import nesterov_momentum
-from nolearn.lasagne import NeuralNet
 import numpy as np
-import theano.tensor as T
-from nolearn.lasagne import BatchIterator
-from theano.sandbox.neighbours import neibs2images
-from lasagne.objectives import squared_error as mse
 
-### this is really dumb, current nolearn doesnt play well with lasagne,
-### so had to manually copy the file I wanted to this folder
-import nnbase.shape as shape
-
-from lasagne.nonlinearities import tanh
 import sys
-from sklearn.metrics import mean_squared_error as mse
-from sklearn.metrics import precision_score
-import os
 import gzip
 import cPickle
-# from IPython.display import Image as IPImage
 from PIL import Image
 
 from nnbase.layers import Unpool2DLayer
-
 from nnbase.utils import FlipBatchIterator
+### this is really dumb, current nolearn doesnt play well with lasagne,
+### so had to manually copy the file I wanted to this folder
+import nnbase.shape as shape
 
 mnistFile = "../rbm/data/mnist.pkl.gz"
 f = gzip.open(mnistFile, 'rb')
