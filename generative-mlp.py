@@ -58,23 +58,25 @@ def sampleInitial(n, inDim):
     continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
     return discrete + continuous
 
-def sampleSource(net, n, inDim, input_var):
+def sampleSource(net_fn, n, inDim):
     initial = sampleInitial(n, inDim)
-    output = lasagne.layers.get_output(net)
-    net_fn = theano.function([input_var], output)
     return initial, net_fn(initial)
 
-def plot(input_var, net, inDim, name):
+def plot(net_fn, inDim, name):
     n = 1000
-    initial, sampled = sampleSource(net, n, inDim, input_var)
+    initial, sampled = sampleSource(net_fn, n, inDim)
     assert sampled.shape[0]==n
     # If feature dim >> 2, and PCA has not happened, it's not too clever to plot the first two dims.
     plt.scatter(sampled.T[0], sampled.T[1])
     plt.savefig(name+".pdf")
     plt.close()
 
-def update(input_var, net, initial, sampled, data):
-    n = len(data)
+def constructSamplerFunction(input_var, net):
+    output = lasagne.layers.get_output(net)
+    net_fn = theano.function([input_var], output)
+    return net_fn
+
+def constructTrainFunction(input_var, net):
     output = lasagne.layers.get_output(net)
     data_var = T.matrix('targets')
     loss = lasagne.objectives.squared_error(output, data_var).mean()
@@ -82,9 +84,9 @@ def update(input_var, net, initial, sampled, data):
     updates = lasagne.updates.nesterov_momentum(
             loss, params, learning_rate=0.2, momentum=0.5)
     train_fn = theano.function([input_var, data_var], updates=updates)
-    train_fn(initial, data)
+    return train_fn
 
-def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
+def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
@@ -92,7 +94,7 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
     if m is None:
         m = n
 
-    initial, sampled = sampleSource(net, m, inDim, input_var)
+    initial, sampled = sampleSource(net_fn, m, inDim)
     bipartiteMatchingBased = False
     if bipartiteMatchingBased:
         permutation = kohonen.optimalPairing(sampled, data)
@@ -124,10 +126,9 @@ def sampleAndUpdate(input_var, net, inDim, n, data=None, m=None):
     sampled = sampled[subSample]
     data = data[subSample]
 
-    update(input_var, net, initial, sampled, data)
+    # That's where the update happens.
+    train_fn(initial, data)
 
-    output = lasagne.layers.get_output(net)
-    net_fn = theano.function([input_var], output)
     updated = net_fn(initial)
     doPlot = False
     if doPlot:
@@ -164,7 +165,7 @@ def mnist(digit=None, torusHack=False):
     np.random.permutation(input)
     return input
 
-def plotDigits(input_var, net, inDim, name, fromGrid, gridSize, plane=None):
+def plotDigits(net_fn, inDim, name, fromGrid, gridSize, plane=None):
     if fromGrid:
         if plane is None:
             plane = (0, 1)
@@ -178,15 +179,13 @@ def plotDigits(input_var, net, inDim, name, fromGrid, gridSize, plane=None):
                 v[plane[0]] = x
                 v[plane[1]] = y
                 initial.append(v)
-        output = lasagne.layers.get_output(net)
-        net_fn = theano.function([input_var], output)
         data = net_fn(initial)
     else:
         assert plane is None, "unsupported"
         n_x = gridSize
         n_y = gridSize
         n = n_x*n_y
-        initial, data = sampleSource(net, n, inDim, input_var)
+        initial, data = sampleSource(net_fn, n, inDim)
 
     image_data = np.zeros(
         (29 * n_y + 1, 29 * n_x - 1),
@@ -212,6 +211,10 @@ def mainMNIST(expName, minibatchSize):
 
     minibatchCount = len(data)/minibatchSize
     epochCount = 500
+
+    train_fn = constructTrainFunction(input_var, net)
+    net_fn = constructSamplerFunction(input_var, net)
+
     for epoch in range(epochCount):
         print "epoch", epoch
         data = np.random.permutation(data)
@@ -219,16 +222,16 @@ def mainMNIST(expName, minibatchSize):
             print i,
             sys.stdout.flush()
             dataBatch = data[i*minibatchSize:(i+1)*minibatchSize]
-            sampleAndUpdate(input_var, net, inDim, n=minibatchSize, data=dataBatch)
+            sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize, data=dataBatch)
         print
 
         # initial, oneSample = sampleSource(net, 1, inDim, input_var)
         # print oneSample.reshape((28,28))
 
-        plotDigits(input_var, net, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
-        plotDigits(input_var, net, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
-        plotDigits(input_var, net, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
-        plotDigits(input_var, net, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
+        plotDigits(net_fn, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
+        plotDigits(net_fn, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
+        plotDigits(net_fn, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
+        plotDigits(net_fn, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
 
         with open(expName+"/som-generator.pkl", 'w') as f:
             cPickle.dump(net, f)
@@ -240,10 +243,12 @@ def mainLowDim(expName, minibatchSize):
     hidden = 100
     input_var = T.matrix('inputs')
     net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=False)
+    train_fn = constructTrainFunction(input_var, net)
+    net_fn = constructSamplerFunction(input_var, net)
     for i in range(100):
         print i,
         sys.stdout.flush()
-        sampleAndUpdate(input_var, net, inDim, n=minibatchSize)
+        sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize)
         plot(input_var, net, inDim, expName+"/d"+str(i))
     print
 
