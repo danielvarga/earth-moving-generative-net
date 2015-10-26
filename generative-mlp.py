@@ -82,7 +82,7 @@ def constructTrainFunction(input_var, net):
     loss = lasagne.objectives.squared_error(output, data_var).mean()
     params = lasagne.layers.get_all_params(net, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.2, momentum=0.5)
+            loss, params, learning_rate=0.02, momentum=0.5)
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
@@ -199,21 +199,38 @@ def plotDigits(net_fn, inDim, name, fromGrid, gridSize, plane=None):
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
+def faces():
+    imgs = []
+    directory = "../face/SCUT-FBP/thumb/"
+    for f in os.listdir(directory):
+        if f.endswith(".jpg"):
+            img = Image.open(directory+f).convert("L")
+            arr = np.array(img).flatten()
+            assert len(arr)==28*28, "Bad size %s %d" % (f, len(arr))
+            imgs.append(arr)
+    return np.array(imgs).astype(float) / 255
+
 def mainMNIST(expName, minibatchSize):
-    data = mnist()
+    face = True
+    if face:
+        data = faces()
+    else:
+        data = mnist()
 
     inDim = 4
     outDim = 28*28
     hidden = 100
     layerNum = 2
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=True)
+    net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=False)
 
     minibatchCount = len(data)/minibatchSize
-    epochCount = 500
+    epochCount = 500000
 
     train_fn = constructTrainFunction(input_var, net)
     net_fn = constructSamplerFunction(input_var, net)
+
+    plotEach = 1000
 
     for epoch in range(epochCount):
         print "epoch", epoch
@@ -228,13 +245,14 @@ def mainMNIST(expName, minibatchSize):
         # initial, oneSample = sampleSource(net, 1, inDim, input_var)
         # print oneSample.reshape((28,28))
 
-        plotDigits(net_fn, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
-        plotDigits(net_fn, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
-        plotDigits(net_fn, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
-        plotDigits(net_fn, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
+        if epoch%plotEach==0:
+            plotDigits(net_fn, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
+            plotDigits(net_fn, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
+            plotDigits(net_fn, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
+            plotDigits(net_fn, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
 
-        with open(expName+"/som-generator.pkl", 'w') as f:
-            cPickle.dump(net, f)
+            with open(expName+"/som-generator.pkl", 'w') as f:
+                cPickle.dump(net, f)
 
 def mainLowDim(expName, minibatchSize):
     inDim = 2
