@@ -9,3 +9,12 @@ cd Data_Collection
 mkdir ../thumb
 mogrify -path ../thumb -thumbnail 28x28 -extent 28x28 -gravity Center -colorspace gray *
 
+cd ~/experiments/rbm/daniel-experiments/kohonen
+montage ../face/SCUT-FBP/thumb/SCUT-FBP-*[0-7].jpg -geometry 28x28+0+0 ../face/SCUT-FBP/tile.jpg
+
+# Second attempt at faces:
+# https://www.kaggle.com/c/facial-keypoints-detection/data
+# http://danielnouri.org/notes/2014/12/17/using-convolutional-neural-nets-to-detect-facial-keypoints-tutorial/#the-data
+cd ~/experiments/rbm/daniel-experiments/face/kaggle-facial-keypoints-detection
+( cat training.csv | awk 'BEGIN{FS=","} { print $NF }' | tail -n +2 ; cat test.csv | cut -f2 -d',' | tail -n +2 ) > pixels.txt
+# -> 7049 train + 1784 test = 8832 96x96x1 images.

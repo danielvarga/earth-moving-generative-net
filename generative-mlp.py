@@ -217,7 +217,7 @@ def mainMNIST(expName, minibatchSize):
     else:
         data = mnist()
 
-    inDim = 4
+    inDim = 7
     outDim = 28*28
     hidden = 100
     layerNum = 2
