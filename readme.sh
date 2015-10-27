@@ -16,6 +16,12 @@ mkdir ~/experiments/rbm/daniel-experiments/face/SCUT-FBP/thumb.big
 mogrify -path ~/experiments/rbm/daniel-experiments/face/SCUT-FBP/thumb.big -thumbnail 32x42 -extent 32x42 -gravity Center -colorspace gray -format png ~/experiments/rbm/daniel-experiments/face/SCUT-FBP/Data_Collection/*.jpg
 # -> this became exp.bigfaces.n100 after learning.
 
+cd exp.bigfaces.n100
+ssh kruso.mokk.bme.hu mkdir ./public_html/kohonen
+for dir in xy yz xz s ; do convert $dir[1-9]0000.png $dir[0-9][0-9]0000.png -delay 10 -loop 0 $dir.gif ; done
+scp *.gif kruso.mokk.bme.hu:./public_html/kohonen/
+
+
 # Second attempt at faces:
 # https://www.kaggle.com/c/facial-keypoints-detection/data
 # http://danielnouri.org/notes/2014/12/17/using-convolutional-neural-nets-to-detect-facial-keypoints-tutorial/#the-data
