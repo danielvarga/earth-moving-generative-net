@@ -165,7 +165,7 @@ def mnist(digit=None, torusHack=False):
     np.random.permutation(input)
     return input
 
-def plotDigits(net_fn, inDim, name, fromGrid, gridSize, plane=None):
+def plotDigits(net_fn, inDim, name, s_x, s_y, fromGrid, gridSize, plane=None):
     if fromGrid:
         if plane is None:
             plane = (0, 1)
@@ -187,38 +187,55 @@ def plotDigits(net_fn, inDim, name, fromGrid, gridSize, plane=None):
         n = n_x*n_y
         initial, data = sampleSource(net_fn, n, inDim)
 
+    data = data.reshape((-1, s_x, s_y))
+
+    e_x = s_x+1
+    e_y = s_y+1
+
     image_data = np.zeros(
-        (29 * n_y + 1, 29 * n_x - 1),
+        (e_y * n_y + 1, e_x * n_x - 1),
         dtype='uint8'
     )
     for idx in xrange(n):
         x = idx % n_x
         y = idx / n_x
-        sample = data[idx].reshape((28,28))
-        image_data[29*x:29*x+28, 29*y:29*y+28] = 255*sample.clip(0, 0.99999)
+        sample = data[idx].reshape((s_y, s_x))
+        image_data[e_y*y:e_y*y+s_y, e_x*x:e_x*x+s_x] = 255*sample.clip(0, 0.99999)
     img = Image.fromarray(image_data)
     img.save(name+".png")
 
-def faces():
+def faces(directory):
     imgs = []
-    directory = "../face/SCUT-FBP/thumb/"
+    s_x = None
+    s_y = None
     for f in os.listdir(directory):
-        if f.endswith(".jpg"):
-            img = Image.open(directory+f).convert("L")
-            arr = np.array(img).flatten()
-            assert len(arr)==28*28, "Bad size %s %d" % (f, len(arr))
+        if f.endswith(".jpg") or f.endswith(".png"):
+            img = Image.open(os.path.join(directory, f)).convert("L")
+            arr = np.array(img)
+            if s_x is None:
+                s_y, s_x = arr.shape
+            else:
+                assert (s_y, s_x) == arr.shape, "Bad size %s %s" % (f, str(arr.shape))
+            arr = arr.flatten()
             imgs.append(arr)
-    return np.array(imgs).astype(float) / 255
+    return np.array(imgs).astype(float) / 255, s_x, s_y
 
 def mainMNIST(expName, minibatchSize):
     face = True
     if face:
-        data = faces()
+        directory = "../face/SCUT-FBP/thumb.big/"
+        data, s_x, s_y = faces(directory)
+        gridSizeForSampling = 10
+        gridSizeForInterpolation = 20
     else:
         data = mnist()
+        s_x = 28
+        s_y = 28
+        gridSizeForSampling = 20
+        gridSizeForInterpolation = 30
 
     inDim = 7
-    outDim = 28*28
+    outDim = s_x*s_y
     hidden = 100
     layerNum = 2
     input_var = T.matrix('inputs')
@@ -243,13 +260,17 @@ def mainMNIST(expName, minibatchSize):
         print
 
         # initial, oneSample = sampleSource(net, 1, inDim, input_var)
-        # print oneSample.reshape((28,28))
+        # print oneSample.reshape((s_y,s_x))
 
         if epoch%plotEach==0:
-            plotDigits(net_fn, inDim, expName+"/xy"+str(epoch), fromGrid=True, gridSize=50, plane=(0,1))
-            plotDigits(net_fn, inDim, expName+"/yz"+str(epoch), fromGrid=True, gridSize=50, plane=(1,2))
-            plotDigits(net_fn, inDim, expName+"/xz"+str(epoch), fromGrid=True, gridSize=50, plane=(0,2))
-            plotDigits(net_fn, inDim, expName+"/s"+str(epoch), fromGrid=False, gridSize=20)
+            plotDigits(net_fn, inDim, expName+"/xy"+str(epoch),
+                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
+            plotDigits(net_fn, inDim, expName+"/yz"+str(epoch),
+                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
+            plotDigits(net_fn, inDim, expName+"/xz"+str(epoch),
+                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
+            plotDigits(net_fn, inDim, expName+"/s"+str(epoch),
+                s_x, s_y, fromGrid=False, gridSize=gridSizeForSampling)
 
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
