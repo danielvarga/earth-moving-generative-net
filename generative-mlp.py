@@ -7,15 +7,14 @@ import math
 
 import numpy as np
 
-import matplotlib.pyplot as plt
-import PIL.Image as Image
-
 import theano
 import theano.tensor as T
 import lasagne
 
 import kohonen
 
+import nnbase.inputs
+import nnbase.vis
 
 def logg(*ss):
     s = " ".join(map(str,ss))
@@ -61,15 +60,6 @@ def sampleInitial(n, inDim):
 def sampleSource(net_fn, n, inDim):
     initial = sampleInitial(n, inDim)
     return initial, net_fn(initial)
-
-def plot(net_fn, inDim, name):
-    n = 1000
-    initial, sampled = sampleSource(net_fn, n, inDim)
-    assert sampled.shape[0]==n
-    # If feature dim >> 2, and PCA has not happened, it's not too clever to plot the first two dims.
-    plt.scatter(sampled.T[0], sampled.T[1])
-    plt.savefig(name+".pdf")
-    plt.close()
 
 def constructSamplerFunction(input_var, net):
     output = lasagne.layers.get_output(net)
@@ -140,95 +130,15 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
             plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
         plt.savefig("grad.pdf")
 
-def mnist(digit=None, torusHack=False):
-    np.random.seed(1)
-    datasetFile = "../rbm/data/mnist.pkl.gz"
-    f = gzip.open(datasetFile, 'rb')
-    datasets = cPickle.load(f)
-    train_set, valid_set, test_set = datasets
-    f.close()
-    input, output = train_set
-    if digit is not None:
-        input = input[output==digit]
-    if torusHack:
-        # This is a SINGLE sample, translated and multiplied.
-        sample = input[0].reshape((28, 28))
-        inputRows = []
-        for dx in range(28):
-            for dy in range(28):
-                s = sample.copy()
-                s = np.hstack((s[:, dy:], s[:, :dy]))
-                s = np.vstack((s[dx:, :], s[:dx, :]))
-                inputRows.append(s.reshape(28*28))
-        input = np.array(inputRows)
-        input = np.vstack([[input]*10])
-    np.random.permutation(input)
-    return input
-
-def plotDigits(net_fn, inDim, name, s_x, s_y, fromGrid, gridSize, plane=None):
-    if fromGrid:
-        if plane is None:
-            plane = (0, 1)
-        n_x = gridSize
-        n_y = gridSize
-        n = n_x*n_y
-        initial = []
-        for x in np.linspace(-2, +2, n_x):
-            for y in np.linspace(-2, +2, n_y):
-                v = np.zeros(inDim)
-                v[plane[0]] = x
-                v[plane[1]] = y
-                initial.append(v)
-        data = net_fn(initial)
-    else:
-        assert plane is None, "unsupported"
-        n_x = gridSize
-        n_y = gridSize
-        n = n_x*n_y
-        initial, data = sampleSource(net_fn, n, inDim)
-
-    data = data.reshape((-1, s_x, s_y))
-
-    e_x = s_x+1
-    e_y = s_y+1
-
-    image_data = np.zeros(
-        (e_y * n_y + 1, e_x * n_x - 1),
-        dtype='uint8'
-    )
-    for idx in xrange(n):
-        x = idx % n_x
-        y = idx / n_x
-        sample = data[idx].reshape((s_y, s_x))
-        image_data[e_y*y:e_y*y+s_y, e_x*x:e_x*x+s_x] = 255*sample.clip(0, 0.99999)
-    img = Image.fromarray(image_data)
-    img.save(name+".png")
-
-def faces(directory):
-    imgs = []
-    s_x = None
-    s_y = None
-    for f in os.listdir(directory):
-        if f.endswith(".jpg") or f.endswith(".png"):
-            img = Image.open(os.path.join(directory, f)).convert("L")
-            arr = np.array(img)
-            if s_x is None:
-                s_y, s_x = arr.shape
-            else:
-                assert (s_y, s_x) == arr.shape, "Bad size %s %s" % (f, str(arr.shape))
-            arr = arr.flatten()
-            imgs.append(arr)
-    return np.array(imgs).astype(float) / 255, s_x, s_y
-
 def mainMNIST(expName, minibatchSize):
     face = True
     if face:
         directory = "../face/SCUT-FBP/thumb.big/"
-        data, s_x, s_y = faces(directory)
+        data, s_x, s_y = nnbase.inputs.faces(directory)
         gridSizeForSampling = 10
         gridSizeForInterpolation = 20
     else:
-        data = mnist()
+        data = nnbase.inputs.mnist()
         s_x = 28
         s_y = 28
         gridSizeForSampling = 20
@@ -263,17 +173,21 @@ def mainMNIST(expName, minibatchSize):
         # print oneSample.reshape((s_y,s_x))
 
         if epoch%plotEach==0:
-            plotDigits(net_fn, inDim, expName+"/xy"+str(epoch),
+            nnbase.vis.plotDigits(net_fn, inDim, expName+"/xy"+str(epoch),
                 s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
-            plotDigits(net_fn, inDim, expName+"/yz"+str(epoch),
+            nnbase.vis.plotDigits(net_fn, inDim, expName+"/yz"+str(epoch),
                 s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
-            plotDigits(net_fn, inDim, expName+"/xz"+str(epoch),
+            nnbase.vis.plotDigits(net_fn, inDim, expName+"/xz"+str(epoch),
                 s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
-            plotDigits(net_fn, inDim, expName+"/s"+str(epoch),
-                s_x, s_y, fromGrid=False, gridSize=gridSizeForSampling)
+            nnbase.vis.plotDigits(net_fn, inDim, expName+"/s"+str(epoch),
+                s_x, s_y, fromGrid=False, gridSize=gridSizeForSampling, sampleSourceFunction=sampleSource)
 
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
+
+def sampleAndPlot(net_fn, inDim, n, name):
+    initial, sampled = sampleSource(net_fn, n, inDim)
+    nnbase.vis.plot(sampled, name)
 
 def mainLowDim(expName, minibatchSize):
     inDim = 2
@@ -288,7 +202,7 @@ def mainLowDim(expName, minibatchSize):
         print i,
         sys.stdout.flush()
         sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize)
-        plot(input_var, net, inDim, expName+"/d"+str(i))
+        sampleAndPlot(net_fn, inDim, 1000, expName+"/d"+str(i))
     print
 
 def main():
