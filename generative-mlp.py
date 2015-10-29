@@ -134,15 +134,20 @@ def mainMNIST(expName, minibatchSize):
     face = True
     if face:
         directory = "../face/SCUT-FBP/thumb.big/"
-        data, s_x, s_y = nnbase.inputs.faces(directory)
+        data, (s_x, s_y) = nnbase.inputs.faces(directory)
         gridSizeForSampling = 10
         gridSizeForInterpolation = 20
+        plotEach = 1000
     else:
-        data = nnbase.inputs.mnist()
-        s_x = 28
-        s_y = 28
+        data, (s_x, s_y) = nnbase.inputs.mnist()
+
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
+        plotEach = 10
+
+
+    # My network works with 1D input.
+    data = nnbase.inputs.flatten(data)
 
     inDim = 7
     outDim = s_x*s_y
@@ -156,8 +161,6 @@ def mainMNIST(expName, minibatchSize):
 
     train_fn = constructTrainFunction(input_var, net)
     net_fn = constructSamplerFunction(input_var, net)
-
-    plotEach = 1000
 
     for epoch in range(epochCount):
         print "epoch", epoch
