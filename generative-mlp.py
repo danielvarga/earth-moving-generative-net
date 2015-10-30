@@ -139,15 +139,16 @@ def mainMNIST(expName, minibatchSize):
         gridSizeForInterpolation = 20
         plotEach = 1000
     else:
-        data, (height, width) = nnbase.inputs.mnist()
+        data, (height, width) = nnbase.inputs.mnist(8)
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
-        plotEach = 10
+        plotEach = 100
 
+    nnbase.vis.plotImages(data[:gridSizeForSampling**2], gridSizeForSampling, expName+"/input")
 
     # My network works with 1D input.
-    data = nnbase.inputs.flatten(data)
+    data = nnbase.inputs.flattenImages(data)
 
     inDim = 7
     outDim = height*width
@@ -176,13 +177,13 @@ def mainMNIST(expName, minibatchSize):
         # print oneSample.reshape((width,height))
 
         if epoch%plotEach==0:
-            nnbase.vis.plotDigits(net_fn, inDim, expName+"/xy"+str(epoch),
+            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xy"+str(epoch),
                 height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
-            nnbase.vis.plotDigits(net_fn, inDim, expName+"/yz"+str(epoch),
+            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/yz"+str(epoch),
                 height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
-            nnbase.vis.plotDigits(net_fn, inDim, expName+"/xz"+str(epoch),
+            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xz"+str(epoch),
                 height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
-            nnbase.vis.plotDigits(net_fn, inDim, expName+"/s"+str(epoch),
+            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/s"+str(epoch),
                 height, width, fromGrid=False, gridSize=gridSizeForSampling, sampleSourceFunction=sampleSource)
 
             with open(expName+"/som-generator.pkl", 'w') as f:
