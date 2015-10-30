@@ -14,15 +14,22 @@ from nnbase.utils import FlipBatchIterator
 ### so had to manually copy the file I wanted to this folder
 import nnbase.shape as shape
 
-def mnist():
-    mnistFile = "../rbm/data/mnist.pkl.gz"
-    f = gzip.open(mnistFile, 'rb')
-    train_set, valid_set, test_set = cPickle.load(f)
-    f.close()
-    X, y = train_set
-    X = X.astype(np.float64).reshape((-1, 1, 28, 28))
-    # sigma and mu should be trained on the same corpus as the autoencoder itself.
-    # This is error-prone!
+import nnbase.inputs
+import nnbase.vis
+
+# This is very error-prone.
+# Optimally, there should be a guarantee that the
+# corpus loaded here is the same as the one that the
+# encoder was trained on.
+def loadCorpus():
+    face = True
+    if face:
+        directory = "../face/SCUT-FBP/thumb.big/"
+        X, (height, width) = nnbase.inputs.faces(directory)
+    else:
+        X, (height, width) = nnbase.inputs.mnist()
+
+    X = X.astype(np.float64).reshape((-1, 1, height, width))
     mu, sigma = np.mean(X), np.std(X)
     print "mu, sigma:", mu, sigma
     return X, mu, sigma
@@ -37,6 +44,9 @@ def get_output_from_nn(last_layer, X):
         out.append( layers.get_output(last_layer, X_batch).eval() )
     return np.vstack(out)
 
+# This helper class deals with
+# 1. normalizing input and de-normalizing output
+# 2. reshaping output into shape compatible with input, namely (-1, 1, x ,y)
 class Autoencoder:
     # sigma and mu should be trained on the same corpus as the autoencoder itself.
     # This is error-prone!
@@ -54,7 +64,9 @@ class Autoencoder:
     # For 0-1 clipped digits this should be close to the identity function.
     def predict(self, X):
         assert not self.afterSplit
-        return self.ae.predict((X - self.mu) / self.sigma).reshape(-1, 28, 28) * self.sigma + self.mu
+        self.x, self.y = X.shape[-2:]
+        flatOutput = self.ae.predict((X - self.mu) / self.sigma).reshape(X.shape) * self.sigma + self.mu
+        return flatOutput.reshape((-1, 1, self.x, self.y))
 
     def encode(self, X):
         return get_output_from_nn(self.encode_layer, (X-self.mu)/self.sigma)
@@ -69,45 +81,17 @@ class Autoencoder:
 
     def decode(self, X):
         assert self.afterSplit
-        return get_output_from_nn(self.final_layer, X) * self.sigma + self.mu
+        flatOutput = get_output_from_nn(self.final_layer, X) * self.sigma + self.mu
+        return flatOutput.reshape((-1, 1, self.x, self.y))
 
-def get_picture_array(X, index):
-    array = X[index].reshape(28,28)
-    array = np.clip(array*255, a_min = 0, a_max = 255)
-    return  array.repeat(4, axis = 0).repeat(4, axis = 1).astype(np.uint8())
-
-def get_picture_array_better(X, n_x, n_y, name):
-    image_data = np.zeros(
-        (29 * n_y + 1, 29 * n_x - 1),
-        dtype='uint8'
-    )
-    n = len(X)
-    assert n <= n_x * n_y
-    for idx in xrange(n):
-        x = idx % n_x
-        y = idx / n_x
-        sample = X[idx].reshape((28,28))
-        image_data[29*x:29*x+28, 29*y:29*y+28] = (255*sample).clip(0, 255)
-    img = Image.fromarray(image_data)
-    img.save(name+".png")
-
-def get_random_images(X_in, X_pred):
-    index = np.random.randint(len(X_pred))
-    print index
-    original_image = Image.fromarray(get_picture_array(X_in, index))
-    new_size = (original_image.size[0] * 2, original_image.size[1])
-    new_im = Image.new('L', new_size)
-    new_im.paste(original_image, (0,0))
-    rec_image = Image.fromarray(get_picture_array(X_pred, index))
-    new_im.paste(rec_image, (original_image.size[0],0))
-    new_im.save('test1.png', format="PNG")
 
 def main():
-    X_train, mu, sigma = mnist()
+    X_train, mu, sigma = loadCorpus()
 
-    autoencoderFile = "../lasagne-demo/conv_ae.pkl"
+    # autoencoderFile = "../lasagne-demo/conv_ae.pkl" # Trained on the full mnist train dataset
+    autoencoderFile = "../lasagne-demo/face.big.pkl" # Trained on the ../face/SCUT-FBP/thumb.big dataset.
+
     ae_raw = cPickle.load(open(autoencoderFile, 'r'))
-
     autoencoder = Autoencoder(ae_raw, mu, sigma)
 
     sampleIndices = map(int, sys.argv[1:])
@@ -118,7 +102,7 @@ def main():
     print "ended prediction"
     sys.stdout.flush()
 
-    get_random_images(X_train, X_pred)
+    nnbase.vis.get_random_images(X_train, X_pred)
 
     autoencoder.split()
 
@@ -131,8 +115,11 @@ def main():
     intervalEncoded = np.multiply.outer(intervalBase, x0)+np.multiply.outer(1.0-intervalBase, x1)
 
     X_decoded = autoencoder.decode(intervalEncoded)
+    nnbase.vis.get_picture_array(X_decoded, 10, 10, "interval")
 
-    get_picture_array_better(X_decoded, 10, 10, "interval")
+    intervalInputspace = np.multiply.outer(intervalBase, X_train[0])+np.multiply.outer(1.0-intervalBase, X_train[1])
+    nnbase.vis.get_picture_array(intervalInputspace, 10, 10, "interval-inputspace")
+
 
 
 if __name__ == "__main__":

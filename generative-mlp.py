@@ -131,15 +131,15 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
         plt.savefig("grad.pdf")
 
 def mainMNIST(expName, minibatchSize):
-    face = True
+    face = False
     if face:
         directory = "../face/SCUT-FBP/thumb.big/"
-        data, (s_x, s_y) = nnbase.inputs.faces(directory)
+        data, (height, width) = nnbase.inputs.faces(directory)
         gridSizeForSampling = 10
         gridSizeForInterpolation = 20
         plotEach = 1000
     else:
-        data, (s_x, s_y) = nnbase.inputs.mnist()
+        data, (height, width) = nnbase.inputs.mnist()
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
@@ -150,7 +150,7 @@ def mainMNIST(expName, minibatchSize):
     data = nnbase.inputs.flatten(data)
 
     inDim = 7
-    outDim = s_x*s_y
+    outDim = height*width
     hidden = 100
     layerNum = 2
     input_var = T.matrix('inputs')
@@ -173,17 +173,17 @@ def mainMNIST(expName, minibatchSize):
         print
 
         # initial, oneSample = sampleSource(net, 1, inDim, input_var)
-        # print oneSample.reshape((s_y,s_x))
+        # print oneSample.reshape((width,height))
 
         if epoch%plotEach==0:
             nnbase.vis.plotDigits(net_fn, inDim, expName+"/xy"+str(epoch),
-                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
+                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
             nnbase.vis.plotDigits(net_fn, inDim, expName+"/yz"+str(epoch),
-                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
+                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
             nnbase.vis.plotDigits(net_fn, inDim, expName+"/xz"+str(epoch),
-                s_x, s_y, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
+                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
             nnbase.vis.plotDigits(net_fn, inDim, expName+"/s"+str(epoch),
-                s_x, s_y, fromGrid=False, gridSize=gridSizeForSampling, sampleSourceFunction=sampleSource)
+                height, width, fromGrid=False, gridSize=gridSizeForSampling, sampleSourceFunction=sampleSource)
 
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
