@@ -28,3 +28,41 @@ scp *.gif kruso.mokk.bme.hu:./public_html/kohonen/
 cd ~/experiments/rbm/daniel-experiments/face/kaggle-facial-keypoints-detection
 ( cat training.csv | awk 'BEGIN{FS=","} { print $NF }' | tail -n +2 ; cat test.csv | cut -f2 -d',' | tail -n +2 ) > pixels.txt
 # -> 7049 train + 1784 test = 8832 96x96x1 images.
+
+
+# Back at digits again, playing with larger n:
+# exp.20dCubeMixture.2layerTanh.n100.digit7 is a stupid mistake. Both
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit7 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit7
+# and
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit7 300 > cout.exp.20dCubeMixture.2layerTanh.n300.digit7
+# were pointing to this dir. The n300 started later, so it's overwritten the other, except for
+# the latest images, *101700.png - *102800.png. Seems like n300 is worse,
+# more prone to forked lines. Why?
+
+# Now running:
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit3 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit3
+python generative-mlp.py exp.20dGaussian.2layerTanh.n300.digit3 300 > cout.exp.20dGaussian.2layerTanh.n300.digit3
+# UPDATE: Dumb me, that's n300 right there.
+# Have to do Gaussian again with n100. See below.
+
+# The filenames tell all, hopefully. For the record:
+# 100 hidden units, learning_rate=0.02, momentum=0.5
+# scale of normal distribution 1/4, findGenForData True, overSamplingFactor 1.
+
+# UPDATE: Disregard this paragraph, it compares gauss.n300 to mixture.n100.
+# -> After some 2000 epochs, the main difference is that mixture does the forks,
+# gauss doesn't, but gauss is super non-diverse.
+# After some 10000-30000 epochs (pretty subjective when) mixture stops doing the forks.
+# The weirdest is that around here, gauss starts the fork thing, while still not
+# being as diverse as mixture. All in all, it's objectively worse.
+
+# UPDATE: Apples to apples aka n100 to n100 comparison
+# between mixture and gauss.
+# and also between gauss.n300 and gauss.n100.
+python generative-mlp.py exp.20dGaussian.2layerTanh.n100.digit3 100 > cout.exp.20dGaussian.2layerTanh.n100.digit3
+# -> Waiting for results.
+
+# Okay, let's go all in, how about getting rid of the continuous component?
+python generative-mlp.py exp.20dBoolean.2layerTanh.n100.digit3 100 > cout.exp.20dBoolean.2layerTanh.n100.digit3
+python generative-mlp.py exp.50dBoolean.2layerTanh.n100.digit3 100 > cout.exp.50dBoolean.2layerTanh.n100.digit3
+# -> Waiting for results.

@@ -139,7 +139,7 @@ def mainMNIST(expName, minibatchSize):
         gridSizeForInterpolation = 20
         plotEach = 1000
     else:
-        data, (height, width) = nnbase.inputs.mnist(8)
+        data, (height, width) = nnbase.inputs.mnist(3)
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
@@ -150,7 +150,7 @@ def mainMNIST(expName, minibatchSize):
     # My network works with 1D input.
     data = nnbase.inputs.flattenImages(data)
 
-    inDim = 7
+    inDim = 20
     outDim = height*width
     hidden = 100
     layerNum = 2
