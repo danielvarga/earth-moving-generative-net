@@ -1,3 +1,4 @@
+. /Users/daniel/experiments/rbm/daniel-experiments/lasagne-demo/venv/bin/activate
 
 # Attempt at faces:
 # http://www.hcii-lab.net/data/SCUT-FBP/EN/introduce.html
@@ -36,7 +37,7 @@ python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit7 100 > cout.ex
 # and
 python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit7 300 > cout.exp.20dCubeMixture.2layerTanh.n300.digit7
 # were pointing to this dir. The n300 started later, so it's overwritten the other, except for
-# the latest images, *101700.png - *102800.png. Seems like n300 is worse,
+# the latest images, *101700.png - *102800.png. n300 is definitely worse,
 # more prone to forked lines. Why?
 
 # Now running:
@@ -60,9 +61,17 @@ python generative-mlp.py exp.20dGaussian.2layerTanh.n300.digit3 300 > cout.exp.2
 # between mixture and gauss.
 # and also between gauss.n300 and gauss.n100.
 python generative-mlp.py exp.20dGaussian.2layerTanh.n100.digit3 100 > cout.exp.20dGaussian.2layerTanh.n100.digit3
-# -> Waiting for results.
+# -> EVALUATE!
 
 # Okay, let's go all in, how about getting rid of the continuous component?
 python generative-mlp.py exp.20dBoolean.2layerTanh.n100.digit3 100 > cout.exp.20dBoolean.2layerTanh.n100.digit3
 python generative-mlp.py exp.50dBoolean.2layerTanh.n100.digit3 100 > cout.exp.50dBoolean.2layerTanh.n100.digit3
-# -> Waiting for results.
+# -> EVALUATE!
+
+# Does this fully-boolean-craziness work with more diverse data as well?
+python generative-mlp.py exp.50dBoolean.2layerTanh.n100.digitAll 100 > cout.exp.50dBoolean.2layerTanh.n100.digitAll
+# -> EVALUATE!
+
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit2 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit2
+python generative-mlp.py exp.50dCubeMixture.2layerTanh.n100.digit2 100 > cout.exp.50dCubeMixture.2layerTanh.n100.digit2
+# -> Waiting for results. EVALUATE!
