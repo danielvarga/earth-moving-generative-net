@@ -141,8 +141,8 @@ def mainMNIST(expName, minibatchSize):
         gridSizeForInterpolation = 20
         plotEach = 1000
     else:
-        digit = 2 # None if we want all of them.
-        data, (height, width) = nnbase.inputs.mnist(digit)
+        digit = None # None if we want all of them.
+        data, (height, width) = nnbase.inputs.mnist(digit) # Don't just rewrite it here, validation!
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30

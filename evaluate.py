@@ -50,7 +50,7 @@ def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSize
     n_x = gridSizeForSampling
     n_y = gridSizeForSampling
     assert n <= n_x * n_y
-    sampleTotal = int(1e5)
+    sampleTotal = int(1e6)
 
     initial, sampled, distances = approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal)
 

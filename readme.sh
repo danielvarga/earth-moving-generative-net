@@ -78,7 +78,26 @@ python generative-mlp.py exp.50dCubeMixture.2layerTanh.n100.digit2 100 > cout.ex
 
 # Lots of work done on quantifying generation performance.
 # We sample train and validation (unseen), greedily approximate them with generated samples,
-# and quantify/visualize difference. Specifically, we log total L2 diff on train and valid,
-# we visualize difference, and histogram L2 distances between sample and best surrogate.
+# and quantify/visualize difference between gold and nearest generated (surrogate).
+# Specifically, we log total L2 diff on train and valid,
+# we visualize difference, and histogram L2 distances between gold and surrogate.
 python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit2.moreVis 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit2.moreVis
 
+cd exp.20dCubeMixture.2layerTanh.n100.digit2.moreVis
+dir=diff_validation ; convert $dir[1-9]000.png $dir[0-9][0-9]000.png -delay 10 -loop 0 $dir.gif
+
+# -> ANALYZE A BIT MORE, but at first glance, it seem like it does not
+# really converge after an initial phase. It's very adamant in NOT
+# learning outliers. If it does not like something, it consistently
+# behaves like it were not there. Why?
+
+# For all digits, sampleTotal1e5 (as above):
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digitAll.moreVis 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digitAll.moreVis
+# Same but sampleTotal1e6, let's give the model a bit more chance to reproduce weird things:
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digitAll.moreVis.sampleTotal1e6 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digitAll.moreVis.sampleTotal1e6
+# -> Setting plotEach=1000 was dumb here, but we'll live with it.
+
+# TODO With our new evaluation weapons, let's attack the issue of
+# how to assign surrogates and samples to each other.
+# Things like findGenForData, overSamplingFactor, and maybe
+# an epoch-dependent n (minibatch sampling size) or learning rate (a la Kohonen).
