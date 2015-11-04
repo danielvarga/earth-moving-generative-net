@@ -12,6 +12,7 @@ import theano.tensor as T
 import lasagne
 
 import kohonen
+import evaluate
 
 import nnbase.inputs
 import nnbase.vis
@@ -139,18 +140,22 @@ def mainMNIST(expName, minibatchSize):
         gridSizeForInterpolation = 20
         plotEach = 1000
     else:
-        data, (height, width) = nnbase.inputs.mnist(2)
+        digit = 2 # None if we want all of them.
+        data, (height, width) = nnbase.inputs.mnist(digit)
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
         plotEach = 100
 
+        validation, (_, _) = nnbase.inputs.mnist(digit)
+
     nnbase.vis.plotImages(data[:gridSizeForSampling**2], gridSizeForSampling, expName+"/input")
 
     # My network works with 1D input.
     data = nnbase.inputs.flattenImages(data)
+    validation = nnbase.inputs.flattenImages(validation)
 
-    inDim = 50
+    inDim = 20
     outDim = height*width
     hidden = 100
     layerNum = 2
@@ -177,6 +182,14 @@ def mainMNIST(expName, minibatchSize):
         # print oneSample.reshape((width,height))
 
         if epoch%plotEach==0:
+            train_distance = evaluate.fit(data[:gridSizeForSampling*gridSizeForSampling],
+                                          net_fn, sampleSource, inDim,
+                                          height, width, gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
+            validation_distance = evaluate.fit(validation[:gridSizeForSampling*gridSizeForSampling],
+                                          net_fn, sampleSource, inDim,
+                                          height, width, gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
+            print "epoch %d train_distance %f validation_distance %f" % (epoch, train_distance, validation_distance)
+
             nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xy"+str(epoch),
                 height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
             nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/yz"+str(epoch),
