@@ -75,3 +75,10 @@ python generative-mlp.py exp.50dBoolean.2layerTanh.n100.digitAll 100 > cout.exp.
 python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit2 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit2
 python generative-mlp.py exp.50dCubeMixture.2layerTanh.n100.digit2 100 > cout.exp.50dCubeMixture.2layerTanh.n100.digit2
 # -> Waiting for results. EVALUATE!
+
+# Lots of work done on quantifying generation performance.
+# We sample train and validation (unseen), greedily approximate them with generated samples,
+# and quantify/visualize difference. Specifically, we log total L2 diff on train and valid,
+# we visualize difference, and histogram L2 distances between sample and best surrogate.
+python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.digit2.moreVis 100 > cout.exp.20dCubeMixture.2layerTanh.n100.digit2.moreVis
+

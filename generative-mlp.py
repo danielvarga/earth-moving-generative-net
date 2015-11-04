@@ -2,6 +2,7 @@ import cPickle
 import gzip
 import sys
 import os
+import time
 import random
 import math
 
@@ -145,7 +146,7 @@ def mainMNIST(expName, minibatchSize):
 
         gridSizeForSampling = 20
         gridSizeForInterpolation = 30
-        plotEach = 100
+        plotEach = 1000
 
         validation, (_, _) = nnbase.inputs.mnist(digit)
 
@@ -182,13 +183,16 @@ def mainMNIST(expName, minibatchSize):
         # print oneSample.reshape((width,height))
 
         if epoch%plotEach==0:
-            train_distance = evaluate.fit(data[:gridSizeForSampling*gridSizeForSampling],
+            start_time = time.time()
+            train_distance = evaluate.fitAndVis(data[:gridSizeForSampling*gridSizeForSampling],
                                           net_fn, sampleSource, inDim,
                                           height, width, gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
-            validation_distance = evaluate.fit(validation[:gridSizeForSampling*gridSizeForSampling],
+            validation_distance = evaluate.fitAndVis(validation[:gridSizeForSampling*gridSizeForSampling],
                                           net_fn, sampleSource, inDim,
                                           height, width, gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
             print "epoch %d train_distance %f validation_distance %f" % (epoch, train_distance, validation_distance)
+            print "time elapsed %f" % (time.time() - start_time)
+            sys.stdout.flush()
 
             nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xy"+str(epoch),
                 height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
