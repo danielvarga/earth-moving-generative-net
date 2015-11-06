@@ -173,14 +173,9 @@ def mainMNIST(expName, minibatchSize):
         print "epoch", epoch
         data = np.random.permutation(data)
         for i in range(minibatchCount):
-            print i,
-            sys.stdout.flush()
             dataBatch = data[i*minibatchSize:(i+1)*minibatchSize]
             sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize, data=dataBatch)
         print
-
-        # initial, oneSample = sampleSource(net, 1, inDim, input_var)
-        # print oneSample.reshape((width,height))
 
         if epoch%plotEach==0:
             start_time = time.time()
