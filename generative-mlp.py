@@ -72,13 +72,13 @@ def constructSamplerFunction(input_var, net):
     net_fn = theano.function([input_var], output)
     return net_fn
 
-def constructTrainFunction(input_var, net):
+def constructTrainFunction(input_var, net, learningRate, momentum):
     output = lasagne.layers.get_output(net)
     data_var = T.matrix('targets')
     loss = lasagne.objectives.squared_error(output, data_var).mean()
     params = lasagne.layers.get_all_params(net, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.02, momentum=0.5)
+            loss, params, learning_rate=learningRate, momentum=momentum)
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
@@ -103,13 +103,14 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
         findGenForData = True
         if findGenForData:
             # Counterintuitively, this seems to be better. Understand, verify.
-            bestDists = np.argmin(distances, axis=1)
-            initial = initial[bestDists]
-            sampled = sampled[bestDists]
-            print distances.min(axis=1).sum()
+            bestIndices = np.argmin(distances, axis=1)
+            initial = initial[bestIndices]
+            sampled = sampled[bestIndices]
+            bestDists = distances.min(axis=1)
         else:
-            bestDists = np.argmin(distances, axis=0)
-            data = data[bestDists]
+            bestIndices = np.argmin(distances, axis=0)
+            data = data[bestIndices]
+            # TODO bestDists currently unimplemented here
 
     # The idea is that big n is good because matches are close,
     # but big n is also bad because large minibatch sizes are generally bad.
@@ -136,6 +137,10 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
             plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
         plt.savefig("grad.pdf")
 
+    # These values are a byproduct of the training step,
+    # so they are from _before_ the training, not after it.
+    return bestDists
+
 
 def train(data, validation, params):
     expName = params.expName
@@ -154,32 +159,40 @@ def train(data, validation, params):
 
     minibatchCount = len(data)/params.minibatchSize
 
-    train_fn = constructTrainFunction(input_var, net)
+    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum)
     net_fn = constructSamplerFunction(input_var, net)
 
     for epoch in range(params.epochCount):
-        print "epoch", epoch
         shuffledData = np.random.permutation(data)
+        epochDistances = []
         for i in range(minibatchCount):
             dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
-            sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch)
+            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch)
+            epochDistances.append(minibatchDistances)
+        epochDistances = np.array(epochDistances)
+        epochInterimMean = epochDistances.mean()
+        epochInterimMedian = np.median(epochDistances)
+        print "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
 
         if epoch % params.plotEach == 0:
-            start_time = time.time()
-            visImageCount = params.gridSizeForSampling ** 2
             # TODO This is mixing the responsibilities of evaluation and visualization:
             # TODO train_distance and validation_distance are calculated on only visImageCount images.
-            visualizedValidation = validation[:visImageCount]
-            visualizedData = data[:visImageCount]
-            train_distance = evaluate.fitAndVis(visualizedData,
-                                          net_fn, sampleSource, params.inDim,
-                                          height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
-            validation_distance = evaluate.fitAndVis(visualizedValidation,
-                                          net_fn, sampleSource, params.inDim,
-                                          height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
-            print "epoch %d train_distance %f validation_distance %f" % (epoch, train_distance, validation_distance)
-            print "time elapsed %f" % (time.time() - start_time)
-            sys.stdout.flush()
+            doValidation = True
+            if doValidation:
+                start_time = time.time()
+                visImageCount = params.gridSizeForSampling ** 2
+                visualizedValidation = validation[:visImageCount]
+                visualizedData = data[:visImageCount]
+                trainMean, trainMedian = evaluate.fitAndVis(visualizedData,
+                                              net_fn, sampleSource, params.inDim,
+                                              height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
+                validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
+                                              net_fn, sampleSource, params.inDim,
+                                              height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
+                print "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
+                    epoch, trainMean, trainMedian, validationMean, validationMedian)
+                print "time elapsed %f" % (time.time() - start_time)
+                sys.stdout.flush()
 
             nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xy"+str(epoch),
                 height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,1))
@@ -238,10 +251,9 @@ def mainLowDim(expName, minibatchSize):
     print
 
 def main():
+    assert len(sys.argv)==2
     params = AttrDict()
     params.expName = sys.argv[1].rstrip("/")
-    params.minibatchSize = int(sys.argv[2])
-    params.inDim = 10
     params.inputType = "mnist"
 
     if params.inputType=="image":
@@ -250,14 +262,21 @@ def main():
         params.gridSizeForInterpolation = 20
         params.plotEach = 1000
     elif params.inputType=="mnist":
-        params.inputDigit = 5
+        params.inputDigit = 6
         params.gridSizeForSampling = 20
         params.gridSizeForInterpolation = 30
-        params.plotEach = 10
+        if params.inputDigit is None:
+            params.plotEach = 1000
+        else:
+            params.plotEach = 100
 
+    params.inDim = 4
+    params.minibatchSize = 100
     params.hiddenLayerSize = 100
     params.layerNum = 2
     params.useReLU = False
+    params.learningRate = 0.02
+    params.momentum = 0.5
     params.epochCount = 500000
 
     try:

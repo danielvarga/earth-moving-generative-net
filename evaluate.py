@@ -49,18 +49,19 @@ def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSize
     n_x = gridSizeForSampling
     n_y = gridSizeForSampling
     assert n <= n_x * n_y
-    sampleTotal = int(1e6)
+    sampleTotal = int(1e5)
 
     initial, sampled, distances = approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal)
 
     # TODO The smart thing here would be to run a gradient descent
     # TODO on initial, further minimizing distances.
 
-    totalDist = distances.sum()
+    meanDist = distances.mean()
+    medianDist = np.median(distances)
 
     nnbase.vis.plot_distance_histogram(distances, name.replace("diff", "hist"))
 
     vis_n = min((n, n_x*n_y))
     nnbase.vis.diff_vis(data[:vis_n], sampled[:vis_n], height, width, n_x, n_y, name)
 
-    return totalDist
+    return meanDist, medianDist
