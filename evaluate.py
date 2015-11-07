@@ -15,7 +15,6 @@ import nnbase.vis
 def approximateMinibatch(data, net_fn, sampleSourceFunction, inDim, sampleForEach):
     n = len(data)
     initial, sampled = sampleSourceFunction(net_fn, sampleForEach, inDim)
-    initial, sampled = sampleSourceFunction(net_fn, sampleForEach, inDim)
     distanceMatrix = kohonen.distanceMatrix(sampled, data)
     bestDists = np.argmin(distanceMatrix, axis=1)
     distances = np.min(distanceMatrix, axis=1)

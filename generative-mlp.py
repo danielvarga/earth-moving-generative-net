@@ -17,6 +17,10 @@ import evaluate
 
 import nnbase.inputs
 import nnbase.vis
+from nnbase.attrdict import AttrDict
+
+
+
 
 def logg(*ss):
     s = " ".join(map(str,ss))
@@ -132,74 +136,86 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
             plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
         plt.savefig("grad.pdf")
 
-def mainMNIST(expName, minibatchSize):
-    face = False
-    if face:
-        directory = "../face/SCUT-FBP/thumb.big/"
-        data, (height, width) = nnbase.inputs.faces(directory)
-        gridSizeForSampling = 10
-        gridSizeForInterpolation = 20
-        plotEach = 1000
-    else:
-        digit = None # None if we want all of them.
-        data, (height, width) = nnbase.inputs.mnist(digit) # Don't just rewrite it here, validation!
 
-        gridSizeForSampling = 20
-        gridSizeForInterpolation = 30
-        plotEach = 1000
+def train(data, validation, params):
+    expName = params.expName
 
-        validation, (_, _) = nnbase.inputs.mnist(digit)
-
-    nnbase.vis.plotImages(data[:gridSizeForSampling**2], gridSizeForSampling, expName+"/input")
+    nnbase.vis.plotImages(data[:params.gridSizeForSampling**2], params.gridSizeForSampling, expName+"/input")
 
     # My network works with 1D input.
     data = nnbase.inputs.flattenImages(data)
     validation = nnbase.inputs.flattenImages(validation)
 
-    inDim = 20
-    outDim = height*width
-    hidden = 100
-    layerNum = 2
-    input_var = T.matrix('inputs')
-    net = buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU=False)
+    height, width = params.height, params.width
 
-    minibatchCount = len(data)/minibatchSize
-    epochCount = 500000
+    outDim = height*width
+    input_var = T.matrix('inputs')
+    net = buildNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim, useReLU=params.useReLU)
+
+    minibatchCount = len(data)/params.minibatchSize
 
     train_fn = constructTrainFunction(input_var, net)
     net_fn = constructSamplerFunction(input_var, net)
 
-    for epoch in range(epochCount):
+    for epoch in range(params.epochCount):
         print "epoch", epoch
-        data = np.random.permutation(data)
+        shuffledData = np.random.permutation(data)
         for i in range(minibatchCount):
-            dataBatch = data[i*minibatchSize:(i+1)*minibatchSize]
-            sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize, data=dataBatch)
-        print
+            dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
+            sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch)
 
-        if epoch%plotEach==0:
+        if epoch % params.plotEach == 0:
             start_time = time.time()
-            train_distance = evaluate.fitAndVis(data[:gridSizeForSampling*gridSizeForSampling],
-                                          net_fn, sampleSource, inDim,
-                                          height, width, gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
-            validation_distance = evaluate.fitAndVis(validation[:gridSizeForSampling*gridSizeForSampling],
-                                          net_fn, sampleSource, inDim,
-                                          height, width, gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
+            visImageCount = params.gridSizeForSampling ** 2
+            # TODO This is mixing the responsibilities of evaluation and visualization:
+            # TODO train_distance and validation_distance are calculated on only visImageCount images.
+            visualizedValidation = validation[:visImageCount]
+            visualizedData = data[:visImageCount]
+            train_distance = evaluate.fitAndVis(visualizedData,
+                                          net_fn, sampleSource, params.inDim,
+                                          height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
+            validation_distance = evaluate.fitAndVis(visualizedValidation,
+                                          net_fn, sampleSource, params.inDim,
+                                          height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
             print "epoch %d train_distance %f validation_distance %f" % (epoch, train_distance, validation_distance)
             print "time elapsed %f" % (time.time() - start_time)
             sys.stdout.flush()
 
-            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xy"+str(epoch),
-                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,1))
-            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/yz"+str(epoch),
-                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(1,2))
-            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/xz"+str(epoch),
-                height, width, fromGrid=True, gridSize=gridSizeForInterpolation, plane=(0,2))
-            nnbase.vis.plotSampledImages(net_fn, inDim, expName+"/s"+str(epoch),
-                height, width, fromGrid=False, gridSize=gridSizeForSampling, sampleSourceFunction=sampleSource)
+            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xy"+str(epoch),
+                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,1))
+            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/yz"+str(epoch),
+                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(1,2))
+            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xz"+str(epoch),
+                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,2))
+            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/s"+str(epoch),
+                height, width, fromGrid=False, gridSize=params.gridSizeForSampling, sampleSourceFunction=sampleSource)
 
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
+
+def readData(params):
+    if params.inputType=="image":
+        data, (height, width) = nnbase.inputs.faces(params.imageDirectory)
+        n = len(data)
+        trainSize = 9*n/10
+        validation = data[trainSize:]
+        data = data[:trainSize]
+    elif params.inputType=="mnist":
+        data, (height, width) = nnbase.inputs.mnist(params.inputDigit, which='train')
+        validation, (_, _) = nnbase.inputs.mnist(params.inputDigit, which='validation')
+    else:
+        assert False, "unknown params.inputType %s" % params.inputType
+    params.height = height
+    params.width  = width
+    return data, validation
+
+
+def setupAndRun(params):
+    data, validation = readData(params)
+    # We dump after readData() because it augments params
+    # with width/height deduced from the input data.
+    nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
+    train(data, validation, params)
 
 def sampleAndPlot(net_fn, inDim, n, name):
     initial, sampled = sampleSource(net_fn, n, inDim)
@@ -222,18 +238,41 @@ def mainLowDim(expName, minibatchSize):
     print
 
 def main():
-    expName = sys.argv[1]
-    minibatchSize = int(sys.argv[2])
+    params = AttrDict()
+    params.expName = sys.argv[1].rstrip("/")
+    params.minibatchSize = int(sys.argv[2])
+    params.inDim = 10
+    params.inputType = "mnist"
+
+    if params.inputType=="image":
+        params.imageDirectory = "../face/SCUT-FBP/thumb.big/"
+        params.gridSizeForSampling = 10
+        params.gridSizeForInterpolation = 20
+        params.plotEach = 1000
+    elif params.inputType=="mnist":
+        params.inputDigit = 5
+        params.gridSizeForSampling = 20
+        params.gridSizeForInterpolation = 30
+        params.plotEach = 10
+
+    params.hiddenLayerSize = 100
+    params.layerNum = 2
+    params.useReLU = False
+    params.epochCount = 500000
+
     try:
-        expName = expName.rstrip("/")
-        os.mkdir(expName)
+        os.mkdir(params.expName)
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
+
     doMNIST = True
     if doMNIST:
-        mainMNIST(expName, minibatchSize)
+        setupAndRun(params)
     else:
-        mainLowDim(expName, minibatchSize)
+        # Yet to refactor.
+        mainLowDim(params.expName, params.minibatchSize)
 
 if __name__ == "__main__":
+    # import cProfile
+    # cProfile.run("main()", "pstats")
     main()
