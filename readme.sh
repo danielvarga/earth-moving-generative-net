@@ -225,3 +225,6 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 # - jobs are logged in ./output/*. It's really only useful for two things:
 #   it has cerrs of my jobs, and it has the running times.
 # - if we want to graph or something, mongodb is the way, dbname is in config.json
+
+# Hideous but mostly harmless hack while I learn to query the mongodb or write better logging:
+grep final spearmintOutput/*/log.txt | sed "s/\/log.txt:final performance / /" | sed "s/spearmintOutput\///" | tr ' -' '\t' | awk '{ print $NF "\t" $0 }' | sort -n
