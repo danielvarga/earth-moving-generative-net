@@ -211,3 +211,17 @@ Spearmint/spearmint/cleanup.sh .
 # TODO This . was not intended for this, there should be a proper subdir for it.
 
 # It's running now. spearmintOutput/log.cerr is where the current best is visible.
+
+# -> Stopped, it has basically converged. Moved everything to spearmintExps/epoch200
+# I copied the config.json there as well.
+# Turns out the best is the maximal allowed inDim 50 and the maximal allowed minibatchSize (!) 100.
+# (We've seen smaller minibatchSizes to be better when inDim was small, haven't we? Not sure anymore.)
+# Learning rate converged to ~10, it was constrained to [0.2, 50].
+
+Spearmint/spearmint/cleanup.sh .
+python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutput/log.cerr
+# - logs of individual runs are in spearmintOutput/*/log.txt
+# - spearmint current best is in spearmintOutput/log.cerr
+# - jobs are logged in ./output/*. It's really only useful for two things:
+#   it has cerrs of my jobs, and it has the running times.
+# - if we want to graph or something, mongodb is the way, dbname is in config.json

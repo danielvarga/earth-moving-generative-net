@@ -142,7 +142,9 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
     return bestDists
 
 
-def train(data, validation, params):
+def train(data, validation, params, logger=None):
+    if logger is None:
+        logger = sys.stdout
     expName = params.expName
 
     nnbase.vis.plotImages(data[:params.gridSizeForSampling**2], params.gridSizeForSampling, expName+"/input")
@@ -152,6 +154,8 @@ def train(data, validation, params):
     validation = nnbase.inputs.flattenImages(validation)
 
     height, width = params.height, params.width
+
+    m = int(params.oversampling*params.minibatchSize)
 
     outDim = height*width
     input_var = T.matrix('inputs')
@@ -170,12 +174,12 @@ def train(data, validation, params):
         epochDistances = []
         for i in range(minibatchCount):
             dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
-            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch)
+            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch, m=m)
             epochDistances.append(minibatchDistances)
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()
         epochInterimMedian = np.median(epochDistances)
-        print "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
+        print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
 
         # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
         if epoch % params.plotEach == 0 and epoch != 0:
@@ -193,10 +197,10 @@ def train(data, validation, params):
                 validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
                                               net_fn, sampleSource, params.inDim,
                                               height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
-                print "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
+                print >> logger, "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
                     epoch, trainMean, trainMedian, validationMean, validationMedian)
-                print "time elapsed %f" % (time.time() - start_time)
-                sys.stdout.flush()
+                print >> logger, "time elapsed %f" % (time.time() - start_time)
+                logger.flush()
 
             nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xy"+str(epoch),
                 height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,1))
@@ -234,8 +238,11 @@ def setupAndRun(params):
     # We dump after readData() because it augments params
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
-    value = train(data, validation, params)
-    # TODO Dump results in directory as well, because the jobs files are impossible to follow.
+
+    with file(params.expName+"/log.txt", "w") as logger:
+        value = train(data, validation, params, logger)
+        print >> logger, "final performance %f" % value
+
     return value
 
 def sampleAndPlot(net_fn, inDim, n, name):
@@ -277,27 +284,52 @@ def setDefaultParams():
 
     params.inDim = 4
     params.minibatchSize = 100
+    # m = oversampling*minibatchSize, that's how many
+    # generated samples do we pair with our minibatchSize gold samples.
+    params.oversampling = 1.0
     params.hiddenLayerSize = 100
     params.layerNum = 2
     params.useReLU = False
     params.learningRate = 0.2
     params.momentum = 0.5
-    params.epochCount = 200
-    params.plotEach = 200 # Just one evaluation/plot at the end.
+    params.epochCount = 400
+    params.plotEach = 400
     return params
+
+
+SHORTENED_PARAM_NAMES = { "learningRate":"lr", "minibatchSize":"n",
+                          "momentum":"mom", "hiddenLayerSize":"hls",
+                          "oversampling":"os"}
+
+def spearmintDirName(spearmintParams):
+    pairs = []
+    for k in sorted(spearmintParams.keys()):
+        v = spearmintParams[k]
+        assert len(v)==1
+        v = v[0]
+        if k in SHORTENED_PARAM_NAMES:
+            k = SHORTENED_PARAM_NAMES[k]
+        # TODO if v is a float, normalize it. (0.2000001 and 0.199999 to 0.2)
+        pairs.append((k, str(v)))
+    pairs.sort()
+    return "-".join(map(lambda (k,v): k+v, pairs))
 
 def spearmintEntry(spearmintParams):
     params = setDefaultParams()
     for k,v in spearmintParams.iteritems():
-        # v[0] because we only work single values, and those are 1-element arrays in spearmint
+        # v[0] because we only work with single values, and those are 1-element ndarrays in spearmint
+        assert len(v)==1
         params[k] = v[0]
-    params.expName = "spearmintOutput/%s%d-%s%1.3f-%s%d" % ("inDim", params.inDim, "LR", params.learningRate, "n", params.minibatchSize)
+    params.expName = "spearmintOutput/" + spearmintDirName(spearmintParams)
 
     try:
         os.mkdir(params.expName)
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
+    # If we are interested in consistent behavior across several datasets,
+    # we can simply aggregate here: value = setupAndRun(params1) + setupAndRun(params2)
+    # where params1 and params2 are the same except for imageDirectory or inputDigit or whatever (and expName).
     value = setupAndRun(params)
     return value
 
