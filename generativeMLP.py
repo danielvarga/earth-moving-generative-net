@@ -235,6 +235,7 @@ def setupAndRun(params):
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
     value = train(data, validation, params)
+    # TODO Dump results in directory as well, because the jobs files are impossible to follow.
     return value
 
 def sampleAndPlot(net_fn, inDim, n, name):
@@ -292,9 +293,7 @@ def spearmintEntry(spearmintParams):
     for k,v in spearmintParams.iteritems():
         # v[0] because we only work single values, and those are 1-element arrays in spearmint
         params[k] = v[0]
-    params.expName = "spearmintOutput/%s%1.3f-%s%d" % ("LR", params.learningRate, "n", params.minibatchSize)
-
-    params.minibatchSize = int(params.minibatchSize)
+    params.expName = "spearmintOutput/%s%d-%s%1.3f-%s%d" % ("inDim", params.inDim, "LR", params.learningRate, "n", params.minibatchSize)
 
     try:
         os.mkdir(params.expName)

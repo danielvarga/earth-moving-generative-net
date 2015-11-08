@@ -203,5 +203,11 @@ mkdir spearmintOutput
 # Reads config.json which references spearmintTask.py
 # and writes to a directory named "output".
 # Also spearmintTask.py is set up so that it creates directories for each
-# job, dirname starts with spearmint and ends with parameters.
+# job, dirname ./spearmintOutput/LR0.010-n10 or such.
 python Spearmint/spearmint/main.py .
+
+# Cleanup command resets experiment:
+Spearmint/spearmint/cleanup.sh .
+# TODO This . was not intended for this, there should be a proper subdir for it.
+
+# It's running now. spearmintOutput/log.cerr is where the current best is visible.
