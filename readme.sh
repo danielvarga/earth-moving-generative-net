@@ -182,3 +182,26 @@ python generative-mlp.py exp.20dCubeMixture.2layerTanh.n100.m1000.digitAll 100 >
 # after making autoencoder work.
 
 ####
+
+# Spearmint-ize
+# (Spearmint because I couldn't figure out how to use kwargs with hyperopt)
+
+# Had to rename generative-mlp.py to generativeMLP.py
+# so that it can be imported as a module.
+
+# We are in the lasagne-demo venv.
+brew install mongodb
+pip install pymongo
+git clone git@github.com:HIPS/Spearmint.git
+pip install -e Spearmint
+mkdir mongodb
+cd mongodb
+mongod --fork --logpath ./log --dbpath .
+cd ..
+mkdir spearmintOutput
+
+# Reads config.json which references spearmintTask.py
+# and writes to a directory named "output".
+# Also spearmintTask.py is set up so that it creates directories for each
+# job, dirname starts with spearmint and ends with parameters.
+python Spearmint/spearmint/main.py .

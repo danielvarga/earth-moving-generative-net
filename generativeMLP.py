@@ -162,7 +162,10 @@ def train(data, validation, params):
     train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum)
     net_fn = constructSamplerFunction(input_var, net)
 
-    for epoch in range(params.epochCount):
+    # The reason for the +1 is that this way, if
+    # epochCount is a multiple of plotEach, then the
+    # last thing that happens is an evaluation.
+    for epoch in range(params.epochCount+1):
         shuffledData = np.random.permutation(data)
         epochDistances = []
         for i in range(minibatchCount):
@@ -174,7 +177,8 @@ def train(data, validation, params):
         epochInterimMedian = np.median(epochDistances)
         print "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
 
-        if epoch % params.plotEach == 0:
+        # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
+        if epoch % params.plotEach == 0 and epoch != 0:
             # TODO This is mixing the responsibilities of evaluation and visualization:
             # TODO train_distance and validation_distance are calculated on only visImageCount images.
             doValidation = True
@@ -206,6 +210,8 @@ def train(data, validation, params):
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
 
+    return validationMedian # The last calculated one, we don't recalculate.
+
 def readData(params):
     if params.inputType=="image":
         data, (height, width) = nnbase.inputs.faces(params.imageDirectory)
@@ -228,7 +234,8 @@ def setupAndRun(params):
     # We dump after readData() because it augments params
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
-    train(data, validation, params)
+    value = train(data, validation, params)
+    return value
 
 def sampleAndPlot(net_fn, inDim, n, name):
     initial, sampled = sampleSource(net_fn, n, inDim)
@@ -250,10 +257,9 @@ def mainLowDim(expName, minibatchSize):
         sampleAndPlot(net_fn, inDim, 1000, expName+"/d"+str(i))
     print
 
-def main():
-    assert len(sys.argv)==2
+
+def setDefaultParams():
     params = AttrDict()
-    params.expName = sys.argv[1].rstrip("/")
     params.inputType = "mnist"
 
     if params.inputType=="image":
@@ -275,9 +281,31 @@ def main():
     params.hiddenLayerSize = 100
     params.layerNum = 2
     params.useReLU = False
-    params.learningRate = 0.02
+    params.learningRate = 0.2
     params.momentum = 0.5
-    params.epochCount = 500000
+    params.epochCount = 200
+    params.plotEach = 200 # Just one evaluation/plot at the end.
+    return params
+
+def spearmintEntry(spearmintParams):
+    params = setDefaultParams()
+    for k,v in spearmintParams.iteritems():
+        # v[0] because we only work single values, and those are 1-element arrays in spearmint
+        params[k] = v[0]
+    params.expName = "spearmintOutput/%s%1.3f-%s%d" % ("LR", params.learningRate, "n", params.minibatchSize)
+
+    try:
+        os.mkdir(params.expName)
+    except OSError:
+        logg("Warning: target directory already exists, or can't be created.")
+
+    value = setupAndRun(params)
+    return value
+
+def main():
+    params = setDefaultParams()
+    assert len(sys.argv)==2
+    params.expName = sys.argv[1].rstrip("/")
 
     try:
         os.mkdir(params.expName)
@@ -286,7 +314,8 @@ def main():
 
     doMNIST = True
     if doMNIST:
-        setupAndRun(params)
+        value = setupAndRun(params)
+        print "final performance %f" % value
     else:
         # Yet to refactor.
         mainLowDim(params.expName, params.minibatchSize)
