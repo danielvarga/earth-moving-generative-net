@@ -11,7 +11,7 @@
             "max"  : 2.0
         },
         "minibatchSize" : {
-            "type" : "INT",
+            "type" : "FLOAT",
             "size" : 1,
             "min"  : 10,
             "max"  : 100

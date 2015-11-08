@@ -294,6 +294,8 @@ def spearmintEntry(spearmintParams):
         params[k] = v[0]
     params.expName = "spearmintOutput/%s%1.3f-%s%d" % ("LR", params.learningRate, "n", params.minibatchSize)
 
+    params.minibatchSize = int(params.minibatchSize)
+
     try:
         os.mkdir(params.expName)
     except OSError:
