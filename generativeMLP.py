@@ -220,7 +220,7 @@ def readData(params):
         validation = data[trainSize:]
         data = data[:trainSize]
     elif params.inputType=="mnist":
-        data, (height, width) = nnbase.inputs.mnist(params.inputDigit, which='train')
+        data, (height, width) = nnbase.inputs.mnist(params.inputDigit, which='train', everyNth=params.everyNthInput)
         validation, (_, _) = nnbase.inputs.mnist(params.inputDigit, which='validation')
     else:
         assert False, "unknown params.inputType %s" % params.inputType
@@ -269,13 +269,11 @@ def setDefaultParams():
         params.gridSizeForInterpolation = 20
         params.plotEach = 1000
     elif params.inputType=="mnist":
-        params.inputDigit = 6
+        params.inputDigit = None
+        params.everyNthInput = 10
         params.gridSizeForSampling = 20
         params.gridSizeForInterpolation = 30
-        if params.inputDigit is None:
-            params.plotEach = 1000
-        else:
-            params.plotEach = 100
+        params.plotEach = 100 # That's too small for params.inputDigit = None, params.everyNthInput = 1
 
     params.inDim = 4
     params.minibatchSize = 100

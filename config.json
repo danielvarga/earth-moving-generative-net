@@ -2,13 +2,12 @@
     "language"        : "PYTHON",
     "main-file"       : "spearmintTask.py",
     "experiment-name" : "whatever",
-    "likelihood"      : "NOISELESS",
     "variables" : {
         "learningRate" : {
             "type" : "FLOAT",
             "size" : 1,
             "min"  : 0.2,
-            "max"  : 10.0
+            "max"  : 50.0
         },
         "minibatchSize" : {
             "type" : "INT",
