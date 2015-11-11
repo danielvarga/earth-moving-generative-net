@@ -228,3 +228,43 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 
 # Hideous but mostly harmless hack while I learn to query the mongodb or write better logging:
 grep final spearmintOutput/*/log.txt | sed "s/\/log.txt:final performance / /" | sed "s/spearmintOutput\///" | tr ' -' '\t' | awk '{ print $NF "\t" $0 }' | sort -n
+
+# TODOS
+# - run the current best for a large number of epochs.
+# - tune the last important untuned parameter: the variance of the input gaussian,
+#   or more generally, the input distribution. (value is not very sensitive to inDim,
+#   so we might as well fix it as small.)
+# - figure out a metric that punishes memorizing samples.
+# - log running times in log.txt. maybe we can play tricks with taking
+#   the median of epoch runtimes instead of sum, that would approximate CPU time pretty well.
+# - save git sha + diff in exp dir.
+# - revive the mainLowDim codepath.
+
+# Which conf is currently the best?
+grep final spearmintOutput/*/log.txt | awk '{ print $NF,$0 }' | grep -v "^nan" | sort -n | head -1 | sed "s/log\.txt.*/conf.txt/"
+open `grep final spearmintOutput/*/log.txt | awk '{ print $NF,$0 }' | sort -n | grep -v "^nan" | head -10 | cut -f2 -d' ' | cut -f1 -d':' | sed "s/log\.txt/s400.png/"`
+# -> Visually, some of them are more perfect but less diverse,
+# some of them are varying a lot in brightness,
+# TODO which parameters influence these?
+
+# Seems like epoch200 and epoch400 does not tell much about the later convergence
+# properties of a param-setting. How about epoch1600?
+
+# I took the current best, rounded the params a bit, and the result is
+# deepDives/conf1.txt
+# output is deepDives/conf1-hls200-inDim20-lr10-mom0.6-n300-os4.0
+# The above is the general workflow: Take promising confs, tune them,
+# set expName to deepDives/confN-DETAILED_DESCRIPTION_PATH,
+# put them into deepDives/confN.txt, add that to git.
+# When it has run, maybe add final round output to git as well.
+
+# As seen on
+# https://docs.google.com/spreadsheets/d/1IWE7_Xeh81Pa9MgaV2QsDKJSHYmkQjBQring_xdC3CY/edit#gid=0
+# , overfitting kicks in a epoch12000.
+# epoch TMean   TMedian VMean   VMedian (10-moving averages)
+# 12000     4.1544335       4.2569459       4.19644         4.22872
+# 87200     4.1218603       4.227801        4.2057856       4.2594421
+
+# conf2 is same as conf1 except for the smaller learning rate 10->1.
+
+# Let's try a spearmint run with 12000 epochs.

@@ -117,6 +117,7 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
     # We throw away data to combine the advantages of big n with small minibatch size.
     # Don't forget that this means that in an epoch we only see 1/overSamplingFactor
     # fraction of the dataset. There must be a less heavy-handed way.
+    # TODO This will be retired probably. Until then, don't confuse it with params.oversampling.
     overSamplingFactor = 1
     subSample = np.random.choice(len(data), len(data)/overSamplingFactor)
     initial = initial[subSample]
@@ -126,16 +127,10 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
     # That's where the update happens.
     train_fn(initial, data)
 
-    updated = net_fn(initial)
     doPlot = False
     if doPlot:
-        plt.xlim(-10,10)
-        plt.ylim(-10,10)
-        for x, y, z in zip(data, sampled, updated):
-            # print np.linalg.norm(x-y)-np.linalg.norm(x-z), x, y, z
-            plt.arrow(y[0], y[1], (x-y)[0], (x-y)[1], color=(1,0,0),  head_width=0.05, head_length=0.1)
-            plt.arrow(y[0], y[1], (z-y)[0], (z-y)[1], color=(0,0,1), head_width=0.05, head_length=0.1)
-        plt.savefig("grad.pdf")
+        # This goes to a different dir as the function does not access params.expName.
+        nnbase.vis.plotGradients(data, sampled, initial, net_fn, "grad")
 
     # These values are a byproduct of the training step,
     # so they are from _before_ the training, not after it.
@@ -292,7 +287,7 @@ def setDefaultParams():
     params.useReLU = False
     params.learningRate = 0.2
     params.momentum = 0.5
-    params.epochCount = 400
+    params.epochCount = 1600
     params.plotEach = 400
     return params
 
@@ -334,22 +329,21 @@ def spearmintEntry(spearmintParams):
     return value
 
 def main():
-    params = setDefaultParams()
     assert len(sys.argv)==2
-    params.expName = sys.argv[1].rstrip("/")
+    confFilename = sys.argv[1]
+    params = nnbase.inputs.paramsFromConf(file(confFilename))
+    logg("Starting experiment, working directory: "+params.expName)
 
     try:
         os.mkdir(params.expName)
     except OSError:
         logg("Warning: target directory already exists, or can't be created.")
 
-    doMNIST = True
-    if doMNIST:
-        value = setupAndRun(params)
-        print "final performance %f" % value
-    else:
-        # Yet to refactor.
-        mainLowDim(params.expName, params.minibatchSize)
+    value = setupAndRun(params)
+    logg("final performance %f" % value)
+
+    # TODO This codepath is temporarily abandoned:
+    # mainLowDim(params.expName, params.minibatchSize)
 
 if __name__ == "__main__":
     # import cProfile
