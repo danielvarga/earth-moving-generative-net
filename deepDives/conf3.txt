@@ -1,0 +1,21 @@
+# parent deepDives/conf1.txt
+# layerNum 2 -> 3
+# Playing a bit with depth 3 neural nets.
+epochCount	100000
+everyNthInput	10
+expName	deepDives/conf3-d3-hls200-inDim20-lr10-mom0.6-n300-os4.0
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	200
+inDim	20
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	300
+momentum	0.6
+oversampling	4.0
+plotEach	400
+useReLU	False
+width	28

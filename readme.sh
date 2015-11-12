@@ -267,8 +267,10 @@ open `grep final spearmintOutput/*/log.txt | awk '{ print $NF,$0 }' | sort -n | 
 
 # conf2 is same as conf1 except for the smaller learning rate 10->1.
 # Surprisingly the convergence is not that much slower.
+# 
 # Also surprisingly, it seems like it will never reach conf1 accuracy.
-# (vmean settling near 4.27 while conf1 vmean stopped at 4.19 at epoch14000.)
+# (conf2 vmean settling near 4.27 at epoch24000 but already at 4.28 at epoch1000.
+# while conf1 vmean stopped at 4.19 at epoch14000.)
 
 # I fixed a visualization UX issue: s*.png are now generated from
 # the same random numbers, so that they form an animation.
@@ -280,20 +282,49 @@ open `grep final spearmintOutput/*/log.txt | awk '{ print $NF,$0 }' | sort -n | 
 mv spearmintOutput spearmintExps/epoch1600
 mv output spearmintExps/epoch1600/
 
-
 # Let's try conf1 with layerNum=3, and call it conf3.
 # ...Wow. That's amazing. At vmean 4.12 at epoch2800.
 # Maybe only the bigger number of parameters? Should check.
 
+# conf3 vmean plateaued between epoch4400 and epoch12000 at 4.10,
+# and then slowly crawled up to 4.13.
 
-# The new spearmint run
-# is different from the old one in the following ways:
+# The new spearmint run epochCount4800_depth3_useReLUFalse_everyNthInput10
+# runs on commit 414fb5df9d8bec71f1c05ae199f6f891ca3a5cb1.
+# It is different from the parent epochCount1600_useReLUFalse_everyNthInput10
+# in the following ways:
 # layerNum 2 -> 3, epoch 1600 -> 4800, plotEach 400 -> 800
 # learningRate.max 200.0 -> 20.0.
 # indim (20,100) -> (10,50)
-# and uses vmean instead of vmedian as value. (They move together anyway, but vmedian is super bumpy.)
+# and uses vmean instead of vmedian as value.
 # Be careful when you compare with the previous spearmint run's vmedians.
-
+# (They move together anyway, but vmedian is super bumpy. A typical difference between the two:
+# vmedian is 0.06 larger than vmean, regardless of the current epoch.)
 
 mkdir spearmintOutput
 python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutput/log.cerr
+
+# Weirdly, its top contender after 9 runs,
+# 4.489997 spearmintOutput/hls300-inDim10-lr6.34021189647-mom0.5-n300-os3.58636953526
+# has parameters quite similar to
+# 4.106030 deepDives/conf3-d3-hls200-inDim20-lr10-mom0.6-n300-os4.0
+# , but the numbers are much-much worse at epoch4800:
+# conf3     epoch 4800 trainMean 3.938845 trainMedian 4.025593 validationMean 4.106030 validationMedian 4.138099
+# spearmint epoch 4800 trainMean 4.452593 trainMedian 4.579250 validationMean 4.489997 validationMedian 4.532965
+# TODO The best theory is that inDim10 is too low. hls200v300 can also be a factor.
+
+# deepDives/conf4 is the same as the successful conf3, but with the faces dataset.
+# One weird thing is that the output has lots of damaged pixels which are always black.
+# (Probably always negative, and clipped to 0.) These go away, but very very slowly:
+# at epoch5000 we have ~25 damaged pixels, epoch12000 ~10, epoch20000 exactly 2.
+# Unfortunately the result of conf4 is not very convincing. Some of the time it's
+# just rote learning, other times the nearest generated sample is a linear combination
+# of two rote-learned faces. At least it's pretty good at rote learning:
+# reproduces quite a few details of the train sample.
+# Of course, what did I expect with just 400 training samples and minibatchsize n300?
+
+# TODO Motivated by this, I should implement the following benchmark and visualization:
+# Same as diff_validation, but with the train dataset taking the place of the generated
+# samples. Needs some refactor. I'll call this the nnbaseline, nn as in nearest neighbor.
+# It only has to be run once for each dataset, but it's not a big deal if we run it
+# once for each traning session.

@@ -1,0 +1,19 @@
+# parent deepDives/conf3.txt
+# params unchanged, input is face/SCUT-FBP/thumb.big
+# everyNthInput=1 of course.
+epochCount	100000
+everyNthInput	1
+expName	deepDives/conf4-faces-d3-hls200-inDim20-lr10-mom0.6-n300-os4.0
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+hiddenLayerSize	200
+imageDirectory	../face/SCUT-FBP/thumb.big/
+inDim	20
+inputType	image
+layerNum	3
+learningRate	10
+minibatchSize	300
+momentum	0.6
+oversampling	4.0
+plotEach	40
+useReLU	False

@@ -211,25 +211,9 @@ def train(data, validation, params, logger=None):
 
     return validationMean # The last calculated one, we don't recalculate.
 
-def readData(params):
-    if params.inputType=="image":
-        data, (height, width) = nnbase.inputs.faces(params.imageDirectory)
-        n = len(data)
-        trainSize = 9*n/10
-        validation = data[trainSize:]
-        data = data[:trainSize]
-    elif params.inputType=="mnist":
-        data, (height, width) = nnbase.inputs.mnist(params.inputDigit, which='train', everyNth=params.everyNthInput)
-        validation, (_, _) = nnbase.inputs.mnist(params.inputDigit, which='validation')
-    else:
-        assert False, "unknown params.inputType %s" % params.inputType
-    params.height = height
-    params.width  = width
-    return data, validation
-
 
 def setupAndRun(params):
-    data, validation = readData(params)
+    data, validation = nnbase.inputs.readData(params)
     # We dump after readData() because it augments params
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
@@ -276,6 +260,8 @@ def setDefaultParams():
         params.gridSizeForSampling = 20
         params.gridSizeForInterpolation = 30
         params.plotEach = 100 # That's too small for params.inputDigit = None, params.everyNthInput = 1
+    else:
+        assert False, "unknown inputType"
 
     params.inDim = 4
     params.minibatchSize = 100
