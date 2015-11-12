@@ -209,7 +209,7 @@ def train(data, validation, params, logger=None):
             with open(expName+"/som-generator.pkl", 'w') as f:
                 cPickle.dump(net, f)
 
-    return validationMedian # The last calculated one, we don't recalculate.
+    return validationMean # The last calculated one, we don't recalculate.
 
 def readData(params):
     if params.inputType=="image":
@@ -287,8 +287,8 @@ def setDefaultParams():
     params.useReLU = False
     params.learningRate = 0.2
     params.momentum = 0.5
-    params.epochCount = 1600
-    params.plotEach = 400
+    params.epochCount = 4800
+    params.plotEach = 800
     return params
 
 

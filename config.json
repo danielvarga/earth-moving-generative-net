@@ -1,13 +1,13 @@
 {
     "language"        : "PYTHON",
     "main-file"       : "spearmintTask.py",
-    "experiment-name" : "epochCount1600_useReLUFalse_everyNthInput10",
+    "experiment-name" : "epochCount4800_depth3_useReLUFalse_everyNthInput10",
     "variables" : {
         "learningRate" : {
             "type" : "FLOAT",
             "size" : 1,
             "min"  : 1.0,
-            "max"  : 200.0
+            "max"  : 20.0
         },
         "momentum" : {
             "type" : "FLOAT",
@@ -24,8 +24,8 @@
         "inDim" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 20,
-            "max"  : 100
+            "min"  : 10,
+            "max"  : 50
         },
         "hiddenLayerSize" : {
             "type" : "INT",

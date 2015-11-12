@@ -266,5 +266,34 @@ open `grep final spearmintOutput/*/log.txt | awk '{ print $NF,$0 }' | sort -n | 
 # 87200     4.1218603       4.227801        4.2057856       4.2594421
 
 # conf2 is same as conf1 except for the smaller learning rate 10->1.
+# Surprisingly the convergence is not that much slower.
+# Also surprisingly, it seems like it will never reach conf1 accuracy.
+# (vmean settling near 4.27 while conf1 vmean stopped at 4.19 at epoch14000.)
 
-# Let's try a spearmint run with 12000 epochs.
+# I fixed a visualization UX issue: s*.png are now generated from
+# the same random numbers, so that they form an animation.
+# The flipside is the we now see a smaller part of the generated space.
+# spearmintExps/epoch1600/output/00000136.out aka
+# spearmintExps/epoch1600/hls117-inDim88-lr2.12805643612-mom0.647445989185-n300-os3.9988942992
+# is the first such one.
+
+mv spearmintOutput spearmintExps/epoch1600
+mv output spearmintExps/epoch1600/
+
+
+# Let's try conf1 with layerNum=3, and call it conf3.
+# ...Wow. That's amazing. At vmean 4.12 at epoch2800.
+# Maybe only the bigger number of parameters? Should check.
+
+
+# The new spearmint run
+# is different from the old one in the following ways:
+# layerNum 2 -> 3, epoch 1600 -> 4800, plotEach 400 -> 800
+# learningRate.max 200.0 -> 20.0.
+# indim (20,100) -> (10,50)
+# and uses vmean instead of vmedian as value. (They move together anyway, but vmedian is super bumpy.)
+# Be careful when you compare with the previous spearmint run's vmedians.
+
+
+mkdir spearmintOutput
+python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutput/log.cerr
