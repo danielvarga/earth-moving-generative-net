@@ -344,11 +344,13 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 
 # inputType=image, imageDirectory=../face/SCUT-FBP/thumb.big/, everyNthInput=1, gridSizeForSampling=20
 # nnbaselineMean 6.403875 nnbaselineMedian 6.177893
+# nnbaselineMean 5.891883 nnbaselineMedian 5.616794 (different seed: 1)
+# nnbaselineMean 5.928859 nnbaselineMedian 5.845743 (another seed: 2)
 # our current best: (bestish, didn't want to meta-overfit by picking the specific best)
 # epoch 28000 trainMean 3.643037 trainMedian 3.592704 validationMean 4.875953 validationMedian 4.736241
 # -> This is impressive, but not directly comparable, I forgot to fix the random seed.
 # (Fixed now, but don't know the seed for conf3. Ouch.
-# Should be a parameter to make the whole run reproducible.)
+# TODO Should be a parameter to make the whole run reproducible.)
 
 # What about visual comparison? mnist looks okay to me. If it's rote learning, it's
 # at least quite convincing. The samples conf4 generates are evil, with all this mixing,
