@@ -311,7 +311,9 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 # , but the numbers are much-much worse at epoch4800:
 # conf3     epoch 4800 trainMean 3.938845 trainMedian 4.025593 validationMean 4.106030 validationMedian 4.138099
 # spearmint epoch 4800 trainMean 4.452593 trainMedian 4.579250 validationMean 4.489997 validationMedian 4.532965
-# TODO The best theory is that inDim10 is too low. hls200v300 can also be a factor.
+# UPDATE: I seriously botched this: layerNum 3 was the main idea,
+# but I actually used layer2. Useless, I put it into Attic/botched.depth2insteadofdepth3
+# See below notes on epochCount4800_depth3_4_useReLUFalse_everyNthInput10 about how I fixed this.
 
 # deepDives/conf4 is the same as the successful conf3, but with the faces dataset.
 # One weird thing is that the output has lots of damaged pixels which are always black.
@@ -360,3 +362,15 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 # rote learning or not.
 
 for dir in diff_validation diff_train s xy yz xz ; do convert input.png $dir[1-9]00.png $dir[0-9][0-9]00.png $dir[0-9][0-9][0-9]00.png -delay 20 -loop 0 $dir.gif ; done
+
+
+#####
+
+# Turns out, I seriously botched the epoch4800 spearmint run: used layerNum 2 instead of 3.
+# Try again: epochCount4800_depth3_4_useReLUFalse_everyNthInput10
+# It is different from the parent epochCount1600_useReLUFalse_everyNthInput10 aka spearmintExps/epoch1600
+# in the following ways:
+# layerNum 2 -> [3,4], epoch 1600 -> 4800, plotEach 400 -> 800
+# learningRate.max 200.0 -> 20.0.
+# indim [20,100] -> [10,50]
+
