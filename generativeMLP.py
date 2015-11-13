@@ -218,7 +218,11 @@ def setupAndRun(params):
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
 
+
     with file(params.expName+"/log.txt", "w") as logger:
+        meanDist, medianDist = evaluate.fitAndVisNNBaselineMain(data, validation, params)
+        print >> logger, "nnbaselineMean %f nnbaselineMedian %f" % (meanDist, medianDist)
+
         value = train(data, validation, params, logger)
         print >> logger, "final performance %f" % value
 

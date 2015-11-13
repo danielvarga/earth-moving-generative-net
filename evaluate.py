@@ -22,6 +22,14 @@ def approximateMinibatch(data, net_fn, sampleSourceFunction, inDim, sampleForEac
     sampled = sampled[bestDists]
     return initial, sampled, distances
 
+# For each validation sample we find the closest train sample.
+def approximateFromTrain(train, validation):
+    distanceMatrix = kohonen.distanceMatrix(train, validation)
+    bestDists = np.argmin(distanceMatrix, axis=1)
+    distances = np.min(distanceMatrix, axis=1)
+    nearests = train[bestDists]
+    return nearests, distances
+
 # We generate sampleTotal data points, and for each gold data point
 # we find the closest generated one.
 def approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal):
@@ -59,9 +67,43 @@ def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSize
     meanDist = distances.mean()
     medianDist = np.median(distances)
 
+    # Awkward, asserts that diff is in the name.
     nnbase.vis.plot_distance_histogram(distances, name.replace("diff", "hist"))
 
     vis_n = min((n, n_x*n_y))
     nnbase.vis.diff_vis(data[:vis_n], sampled[:vis_n], height, width, n_x, n_y, name)
 
     return meanDist, medianDist
+
+# NN as in nearest neighbor.
+# A refactor with fitAndVis would be nice, but not a priority now.
+def fitAndVisNNBaseline(train, validation, height, width, gridSizeForSampling, name):
+    n = len(validation)
+    n_x = gridSizeForSampling
+    n_y = gridSizeForSampling
+    assert n <= n_x * n_y
+
+    nearests, distances = approximateFromTrain(train, validation)
+
+    nnbase.vis.plot_distance_histogram(distances, name.replace("diff", "hist"))
+
+    meanDist = distances.mean()
+    medianDist = np.median(distances)
+
+    vis_n = min((n, n_x*n_y))
+    nnbase.vis.diff_vis(validation[:vis_n], nearests[:vis_n], height, width, n_x, n_y, name)
+
+    return meanDist, medianDist
+
+# Again, as in regular fitAndVis(), the mixing of fit and vis causes
+# this stupid constraint on validation set size.
+def fitAndVisNNBaselineMain(train, validation, params):
+    n = params.gridSizeForSampling ** 2
+    train = nnbase.inputs.flattenImages(train)
+    validation = nnbase.inputs.flattenImages(validation)
+    visualizedValidation = validation[:n]
+    meanDist, medianDist = fitAndVisNNBaseline(train, visualizedValidation, params.height, params.width,
+                                               params.gridSizeForSampling, params.expName+"/diff_nnbaseline")
+    return meanDist, medianDist
+
+

@@ -323,8 +323,38 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 # reproduces quite a few details of the train sample.
 # Of course, what did I expect with just 400 training samples and minibatchsize n300?
 
-# TODO Motivated by this, I should implement the following benchmark and visualization:
+# Motivated by this, I implemented the following benchmark and visualization:
 # Same as diff_validation, but with the train dataset taking the place of the generated
 # samples. Needs some refactor. I'll call this the nnbaseline, nn as in nearest neighbor.
 # It only has to be run once for each dataset, but it's not a big deal if we run it
 # once for each traning session.
+# Values:
+# inputType=mnist, inputDigit=None, everyNthInput=10, gridSizeForSampling=20
+# nnbaselineMean 4.863300 nnbaselineMedian 5.040003
+# -> Why is gridSizeForSampling relevant? Because of a stupid mixing of
+# responsibilities, we use only the first gridSizeForSampling**2 validation points.
+# -> mnist() random seed set to 1. We do randomization there, but reproducibly.
+
+# That sound like good news, and it probably is: our current best is
+# epoch 6400 trainMean 3.906343 trainMedian 4.017440 validationMean 4.103766 validationMedian 4.130489
+# , which was probably meta-overfitted a bit, but still better.
+# But before we start to celebrate, this is probably an artifact:
+# Our generated samples are smoothed, less sharp compared to the gold samples,
+# so a close but imperfect match is scored higher than when we compare two gold ones.
+
+# inputType=image, imageDirectory=../face/SCUT-FBP/thumb.big/, everyNthInput=1, gridSizeForSampling=20
+# nnbaselineMean 6.403875 nnbaselineMedian 6.177893
+# our current best: (bestish, didn't want to meta-overfit by picking the specific best)
+# epoch 28000 trainMean 3.643037 trainMedian 3.592704 validationMean 4.875953 validationMedian 4.736241
+# -> This is impressive, but not directly comparable, I forgot to fix the random seed.
+# (Fixed now, but don't know the seed for conf3. Ouch.
+# Should be a parameter to make the whole run reproducible.)
+
+# What about visual comparison? mnist looks okay to me. If it's rote learning, it's
+# at least quite convincing. The samples conf4 generates are evil, with all this mixing,
+# but the diffs look okay when compared to the nnbaseline (which is bad, not enough data points).
+# Side remark: Even though the individual s*.png-s are shitty, s.gif is pretty cool,
+# mixing looks like constant smooth crossfading there, and the details slowly emerging look great,
+# rote learning or not.
+
+for dir in diff_validation diff_train s xy yz xz ; do convert input.png $dir[1-9]00.png $dir[0-9][0-9]00.png $dir[0-9][0-9][0-9]00.png -delay 20 -loop 0 $dir.gif ; done
