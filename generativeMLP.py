@@ -34,7 +34,7 @@ def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
     else:
         nonlinearity = lasagne.nonlinearities.tanh
         gain = 1.0
-    assert layerNum in (2,3)
+    assert layerNum in (2,3,4)
 
     l_in = lasagne.layers.InputLayer(shape=(None, inDim),
                                      input_var=input_var)
@@ -47,13 +47,26 @@ def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
             l_hid, num_units=outDim,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
-    else:
+    elif layerNum==3:
         l_hid2 = lasagne.layers.DenseLayer(
             l_hid, num_units=hidden,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
         l_out = lasagne.layers.DenseLayer(
             l_hid2, num_units=outDim,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+    elif layerNum==4:
+        l_hid2 = lasagne.layers.DenseLayer(
+            l_hid, num_units=hidden,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+        l_hid3 = lasagne.layers.DenseLayer(
+            l_hid2, num_units=hidden,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+        l_out = lasagne.layers.DenseLayer(
+            l_hid3, num_units=outDim,
             nonlinearity=nonlinearity,
             W=lasagne.init.GlorotUniform(gain=gain))
     return l_out
