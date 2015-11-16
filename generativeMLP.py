@@ -19,6 +19,9 @@ import nnbase.inputs
 import nnbase.vis
 from nnbase.attrdict import AttrDict
 
+# These are only included to make the unpickling of the autoencoder possible:
+from nnbase.layers import Unpool2DLayer
+from nnbase.utils import FlipBatchIterator
 
 
 
@@ -287,7 +290,7 @@ def setDefaultParams():
     params.oversampling = 1.0
     params.hiddenLayerSize = 100
     params.layerNum = 2
-    params.useReLU = False
+    params.useReLU = True
     params.learningRate = 0.2
     params.momentum = 0.5
     params.epochCount = 4800

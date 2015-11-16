@@ -69,6 +69,7 @@ class Autoencoder:
         return flatOutput.reshape((-1, 1, self.x, self.y))
 
     def encode(self, X):
+        self.x, self.y = X.shape[-2:]
         return get_output_from_nn(self.encode_layer, (X-self.mu)/self.sigma)
 
     # N.B after we do this, we won't be able to use the original autoencoder , as the layers are broken up
@@ -82,6 +83,8 @@ class Autoencoder:
     def decode(self, X):
         assert self.afterSplit
         flatOutput = get_output_from_nn(self.final_layer, X) * self.sigma + self.mu
+        # Evil hack: decode only knows the shape of the input space
+        # if you did a predict or encode previously. TODO Fix asap.
         return flatOutput.reshape((-1, 1, self.x, self.y))
 
 

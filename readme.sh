@@ -314,9 +314,11 @@ python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutp
 # UPDATE: I seriously botched this: layerNum 3 was the main idea,
 # but I actually used layer2. Useless, I put it into Attic/botched.depth2insteadofdepth3
 # See below notes on epochCount4800_depth3_4_useReLUFalse_everyNthInput10 about how I fixed this.
+# UPDATE2, even more important: I inadverently used relu in all deepDives.
 
 # deepDives/conf4 is the same as the successful conf3, but with the faces dataset.
 # One weird thing is that the output has lots of damaged pixels which are always black.
+# (UPDATE: I used relu here without knowing it, that's the reason.)
 # (Probably always negative, and clipped to 0.) These go away, but very very slowly:
 # at epoch5000 we have ~25 damaged pixels, epoch12000 ~10, epoch20000 exactly 2.
 # Unfortunately the result of conf4 is not very convincing. Some of the time it's
@@ -374,3 +376,12 @@ for dir in diff_validation diff_train s xy yz xz ; do convert input.png $dir[1-9
 # learningRate.max 200.0 -> 20.0.
 # indim [20,100] -> [10,50]
 
+# Oh god I botched something even more serious:
+# False is not turned into bool, stays str. That means that deepDives used relu even though
+# the conf explicitely said don't use relu. That's what made conf3 perform better than any
+# of the spearmint runs.
+# I changed the conf[1234].txts to say userelu True. Serialization bug is fixed now.
+# tanh spearmint run moved to spearmintExps/epoch4800-tanh, restarting with relu,
+# expname epochCount4800_depth3_4_useReLUTrue_everyNthInput10
+# BTW relu is not just better than tanh, it's also 30% faster. (I assume they got the same amount
+# of CPU cycles.

@@ -16,4 +16,4 @@ minibatchSize	300
 momentum	0.6
 oversampling	4.0
 plotEach	40
-useReLU	False
+useReLU	True
