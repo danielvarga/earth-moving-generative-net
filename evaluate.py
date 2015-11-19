@@ -71,7 +71,7 @@ def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSize
     nnbase.vis.plot_distance_histogram(distances, name.replace("diff", "hist"))
 
     vis_n = min((n, n_x*n_y))
-    nnbase.vis.diff_vis(data[:vis_n], sampled[:vis_n], height, width, n_x, n_y, name)
+    nnbase.vis.diff_vis(data[:vis_n], sampled[:vis_n], height, width, n_x, n_y, name, distances=distances)
 
     return meanDist, medianDist
 
@@ -91,7 +91,7 @@ def fitAndVisNNBaseline(train, validation, height, width, gridSizeForSampling, n
     medianDist = np.median(distances)
 
     vis_n = min((n, n_x*n_y))
-    nnbase.vis.diff_vis(validation[:vis_n], nearests[:vis_n], height, width, n_x, n_y, name)
+    nnbase.vis.diff_vis(validation[:vis_n], nearests[:vis_n], height, width, n_x, n_y, name, distances=distances)
 
     return meanDist, medianDist
 
