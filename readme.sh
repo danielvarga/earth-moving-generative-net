@@ -385,3 +385,26 @@ for dir in diff_validation diff_train s xy yz xz ; do convert input.png $dir[1-9
 # expname epochCount4800_depth3_4_useReLUTrue_everyNthInput10
 # BTW relu is not just better than tanh, it's also 30% faster. (I assume they got the same amount
 # of CPU cycles.
+
+# Turns out the cubemixture does not help with the newer models.
+# (If I had the time, I would investigate where did it stop helping,
+# but relu+layer3 is capable of harder transitions, that's for sure.)
+
+# Here is the current best epoch4800 spearmintOutput compared with its straight gaussian child-experiment:
+cat /Users/daniel/experiments/rbm/daniel-experiments/kohonen/spearmintOutput/hls300-inDim12-layerNum4-lr20.0-mom0.5-n300-os3.99999999824/log.txt | grep train | awk '($2%800==0)'
+epoch 800 trainMean 3.942084 trainMedian 4.023556 validationMean 4.120661 validationMedian 4.135574
+epoch 1600 trainMean 3.819828 trainMedian 3.863694 validationMean 4.091879 validationMedian 4.141805
+epoch 2400 trainMean 3.764334 trainMedian 3.825936 validationMean 4.100879 validationMedian 4.125267
+epoch 3200 trainMean 3.727745 trainMedian 3.769446 validationMean 4.115094 validationMedian 4.149114
+epoch 4000 trainMean 3.688223 trainMedian 3.761931 validationMean 4.101507 validationMedian 4.165966
+epoch 4800 trainMean 3.699963 trainMedian 3.767960 validationMean 4.109944 validationMedian 4.142234
+
+cat deepDives/conf7-gauss/log.txt | grep train | awk '($2%800==0)'
+epoch 800 trainMean 3.946862 trainMedian 4.045183 validationMean 4.104929 validationMedian 4.164662
+epoch 1600 trainMean 3.825675 trainMedian 3.930816 validationMean 4.087788 validationMedian 4.111501
+epoch 2400 trainMean 3.775109 trainMedian 3.883820 validationMean 4.086608 validationMedian 4.099182
+epoch 3200 trainMean 3.747717 trainMedian 3.784954 validationMean 4.099656 validationMedian 4.120957
+epoch 4000 trainMean 3.741761 trainMedian 3.797170 validationMean 4.103545 validationMedian 4.097180
+epoch 4800 trainMean 3.690358 trainMedian 3.760918 validationMean 4.082099 validationMedian 4.111330
+# -> Note the validationMedian being close to the validationMean, that's unusual.
+

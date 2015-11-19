@@ -1,6 +1,10 @@
 # parent deepDives/conf1.txt
 # layerNum 2 -> 3
 # Playing a bit with depth 3 neural nets.
+# this:
+# epoch 4800 trainMean 3.938845 trainMedian 4.025593 validationMean 4.106030 validationMedian 4.138099
+# parent:
+# epoch 4800 trainMean 4.209222 trainMedian 4.325197 validationMean 4.234253 validationMedian 4.293222
 epochCount	100000
 everyNthInput	10
 expName	deepDives/conf3-d3-hls200-inDim20-lr10-mom0.6-n300-os4.0

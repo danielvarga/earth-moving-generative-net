@@ -1,0 +1,27 @@
+# parent: see below
+# This is identical to the current-best epoch4800-relu-cubemixture spearmintOutput found at
+# /Users/daniel/experiments/rbm/daniel-experiments/kohonen/spearmintOutput/hls300-inDim12-layerNum4-lr20.0-mom0.5-n300-os3.99999999824/conf.txt
+# but it's running with a straight gauss input distribution.
+# Also, plotEach 800 -> 200, epochCount 4800 -> 48000
+# this:
+# epoch 4800 trainMean 3.690358 trainMedian 3.760918 validationMean 4.082099 validationMedian 4.111330
+# parent:
+# epoch 4800 trainMean 3.699963 trainMedian 3.767960 validationMean 4.109944 validationMedian 4.142234
+epochCount	48000
+everyNthInput	10
+expName	deepDives/conf7-gauss
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	300
+inDim	12
+inputDigit	None
+inputType	mnist
+layerNum	4
+learningRate	20.0
+minibatchSize	300
+momentum	0.5
+oversampling	3.99999999824
+plotEach	200
+useReLU	True
+width	28

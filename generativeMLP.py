@@ -75,6 +75,8 @@ def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
     return l_out
 
 def sampleInitial(n, inDim):
+    return np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
+    # The old cubemixture model is now unreachable:
     discrete = np.random.randint(0, 2, (n, inDim))
     continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
     return discrete + continuous

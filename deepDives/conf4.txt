@@ -1,6 +1,9 @@
 # parent deepDives/conf3.txt
 # params unchanged, input is face/SCUT-FBP/thumb.big
 # everyNthInput=1 of course.
+# this:
+# epoch 60000 trainMean 3.207882 trainMedian 3.244128 validationMean 4.883027 validationMedian 4.791943
+# (epoch 60000 because of the super-small corpus size)
 epochCount	100000
 everyNthInput	1
 expName	deepDives/conf4-faces-d3-hls200-inDim20-lr10-mom0.6-n300-os4.0

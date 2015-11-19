@@ -1,4 +1,6 @@
 # Modified from spearmintExps/epoch1600/hls220-inDim20-lr10.1885871231-mom0.635511081693-n290-os4.0/conf.txt
+# this:
+# epoch 4800 trainMean 4.209222 trainMedian 4.325197 validationMean 4.234253 validationMedian 4.293222
 epochCount	100000
 everyNthInput	10
 expName	deepDives/conf1-hls200-inDim20-lr10-mom0.6-n300-os4.0
