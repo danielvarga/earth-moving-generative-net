@@ -72,8 +72,8 @@ def slowOptimalPairing(x,y):
     return bestP
 
 def distanceMatrix(x, y):
-    xL2S = np.sum(np.abs(x)**2,axis=-1)
-    yL2S = np.sum(np.abs(y)**2,axis=-1)
+    xL2S = np.sum(x*x,axis=-1)
+    yL2S = np.sum(y*y,axis=-1)
     xL2SM = np.tile(xL2S, (len(y), 1))
     yL2SM = np.tile(yL2S, (len(x), 1))
     squaredDistances = xL2SM + yL2SM.T - 2.0*y.dot(x.T)
