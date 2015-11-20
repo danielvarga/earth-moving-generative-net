@@ -408,3 +408,16 @@ epoch 4000 trainMean 3.741761 trainMedian 3.797170 validationMean 4.103545 valid
 epoch 4800 trainMean 3.690358 trainMedian 3.760918 validationMean 4.082099 validationMedian 4.111330
 # -> Note the validationMedian being close to the validationMean, that's unusual.
 
+# Balazs observes that the left bump on the histogram is NOT cause by
+# rote learning: it's simply an artifact of the allDigit mnist task:
+# 1s are easier to learn, and they also have smaller area. They are the bump.
+
+# A better task-specific measure of closeness of samples is the relative improvement
+# over the all-black baseline, that is d(gold,generated)/d(gold,0).
+# (1s are easier to learn, so they are still on the left, but the bimodality goes away.)
+# Let's not forget that this is NOT what our algorithm optimizes, nor should it.
+# (Unless we want to make it super mnist-specific, which we don't.)
+# This metric causes another big inconvenience as well: We can't compare the logged
+# aggregate numbers to the histogram numbers.
+# So I won't use it in the histogram, and I will use it on the diff.
+# Hope that won't cause confusion.
