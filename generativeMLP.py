@@ -118,6 +118,7 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
         sampled = sampled[permutation]
     else:
         distances = kohonen.distanceMatrix(sampled, data)
+        assert distances.shape == (len(data), len(sampled)) # Beware the transpose!
         findGenForData = True
         if findGenForData:
             # Counterintuitively, this seems to be better. Understand, verify.

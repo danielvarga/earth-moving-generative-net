@@ -421,3 +421,22 @@ epoch 4800 trainMean 3.690358 trainMedian 3.760918 validationMean 4.082099 valid
 # aggregate numbers to the histogram numbers.
 # So I won't use it in the histogram, and I will use it on the diff.
 # Hope that won't cause confusion.
+
+#########
+
+# Trying to port the slow distanceMatrix calculation from numpy to theano.
+# I start with a modest goal:
+
+# A cool little toy learning problem:
+# We want to learn a translated 2D standard normal's translation, that's a 2D vector.
+# We generate batchSize samples from this target distribution.
+# We generate sampleSize samples from our current best bet for the distribution.
+# We find the closest generated sample to each target sample.
+# We calculate the sum of distances.
+# That's the loss that we optimize by gradient descent.
+# Note that Theano doesn't even break a sweat when doing backprop
+# through a layer of distance minimization.
+# Of course that's less impressive than it first sounds, because
+# locally, the identity of the nearest target sample never changes.
+
+# UPDATE: Maybe it does break a sweat after all: it diverges if we multiply the loss by 100.
