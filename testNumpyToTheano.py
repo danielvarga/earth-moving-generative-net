@@ -30,7 +30,7 @@ def end(s=None):
 
 
 def randomMatrix(n, f):
-    return np.random.uniform(size=n*f).reshape((n, f))
+    return np.random.normal(size=n*f).reshape((n, f)).astype(np.float32)
 
 def distanceMatrixSlow(x, y):
     xL2S = np.sum(np.abs(x)**2,axis=-1)
@@ -98,14 +98,14 @@ def constructMinimalDistancesFunction(n, m):
 # Of course that's less impressive than it first sounds, because
 # locally, the identity of the nearest target sample never changes.
 def testSampleInitial():
-    batchSize = 100
-    sampleSize = 100
+    batchSize = 1000
+    sampleSize = 1000
     inDim = 2
     srng = theano.sandbox.rng_mrg.MRG_RandomStreams(seed=234)
 
     dataVar = T.matrix("data")
     initialsVar = srng.normal((sampleSize, inDim))
-    parametersVar = theano.shared(np.zeros(inDim), "parameters")
+    parametersVar = theano.shared(np.zeros(inDim, dtype=np.float32), "parameters")
     generatedVar = initialsVar + parametersVar # broadcast
 
 
@@ -121,8 +121,8 @@ def testSampleInitial():
 
     train_fn = theano.function([dataVar], updates=updates)
 
-    for epoch in range(1000):
-        data = randomMatrix(batchSize, inDim) + np.array([-5.0, 12.0])
+    for epoch in range(10000):
+        data = randomMatrix(batchSize, inDim) + np.array([-5.0, 12.0], dtype=np.float32)
         train_fn(data)
         print parametersVar.get_value()
 
