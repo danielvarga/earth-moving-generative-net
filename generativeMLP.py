@@ -194,6 +194,7 @@ def train(data, validation, params, logger=None):
         epochInterimMean = epochDistances.mean()
         epochInterimMedian = np.median(epochDistances)
         print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
+        logger.flush()
 
         # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
         if epoch % params.plotEach == 0 and epoch != 0:

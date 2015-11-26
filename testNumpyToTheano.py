@@ -30,7 +30,7 @@ def end(s=None):
 
 
 def randomMatrix(n, f):
-    return np.random.normal(size=n*f).reshape((n, f)).astype(np.float32)
+    return np.random.normal(size=n*f).astype(np.float32).reshape((n, f))
 
 def distanceMatrixSlow(x, y):
     xL2S = np.sum(np.abs(x)**2,axis=-1)
@@ -121,7 +121,7 @@ def testSampleInitial():
 
     train_fn = theano.function([dataVar], updates=updates)
 
-    for epoch in range(10000):
+    for epoch in range(1000):
         data = randomMatrix(batchSize, inDim) + np.array([-5.0, 12.0], dtype=np.float32)
         train_fn(data)
         print parametersVar.get_value()

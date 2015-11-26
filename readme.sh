@@ -440,3 +440,85 @@ epoch 4800 trainMean 3.690358 trainMedian 3.760918 validationMean 4.082099 valid
 # locally, the identity of the nearest target sample never changes.
 
 # UPDATE: Maybe it does break a sweat after all: it diverges if we multiply the loss by 100.
+
+##########
+# geforce machine installation notes
+
+# NVIDIA Drivers
+# https://access.redhat.com/solutions/64300
+# -> Careful, it hardwires an old driver, I changed it to
+# http://http.download.nvidia.com/XFree86/Linux-x86_64/358.16/NVIDIA-Linux-x86_64-358.16.run
+
+# CUDA
+# http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-linux/index.html
+# http://developer.download.nvidia.com/compute/cuda/repos/fedora21/x86_64/cuda-repo-fedora21-7.5-18.x86_64.rpm
+
+# The nvcc compiler needs gcc, and needs <=4.9 gcc. On our fedora 5.1.1 is the default.
+# So I've built and installed gcc-4.9.3.
+# Standard procedure described in https://gcc.gnu.org/wiki/InstallingGCC
+# But default mirror in ./contrib/download_prerequisites
+# are too slow, replaced them with ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure
+# After make install, new/old gcc was in /usr/local/gcc/4.9.3/, but not on PATH.
+# We only need it for nvcc anyway, so the best way to add this to ~/.theanorc :
+# [nvcc]
+# compiler_bindir=/usr/local/gcc/4.9.3/bin/'
+
+# This is how my ~/.theanorc looks like now on geforce:
+[global]
+floatX = float32
+device = gpu0
+warn_float64 = raise
+assert_no_cpu_op = raise
+cxx = /usr/local/gcc/4.9.3/bin/g++
+[nvcc]
+fastmath = True
+compiler_bindir = /usr/local/gcc/4.9.3/bin/
+
+# On the laptop, compiler_bindir and cxx is not there, and device=cpu,
+# the rest is the same.
+
+##########
+
+# Very important note, already mentioned in lasagne-demo/readme.sh :
+# I had to patch layers/conv.py
+# /usr/lib/python2.7/site-packages/lasagne/layers/conv.py
+# Specifically, I added as a first line of Conv2DLayer.__init__() this:
+# del kwargs['border_mode']
+# I don't know where this incompatibility is coming from.
+
+##########
+# Benchmarks
+
+# testNumpyToTheano.py:testSampleInitial() 10000 epoch 1000 data 1000 generated:
+# laptop: 55 sec including compilation.
+# geforce: 76 sec including compilation.
+
+# testNumpyToTheano.py:test() :
+laptop cpu:
+minimal distances theano finished in 2.422537 seconds.
+all distances theano finished in 1.913697 seconds.
+all distances slow numpy finished in 2.907862 seconds.
+all distances fast numpy finished in 2.942749 seconds.
+
+geforce gpu:
+minimal distances theano finished in 0.594864 seconds.
+all distances theano finished in 0.094942 seconds.
+all distances slow numpy finished in 27.137307 seconds.
+all distances fast numpy finished in 27.065705 seconds.
+
+geforce cpu:
+minimal distances theano finished in 25.903046 seconds.
+all distances theano finished in 25.355256 seconds.
+(numpy are the same.)
+
+# -> Wow, numpy dot product is dead slow on geforce.
+# I manage to run generativeMLP.py on the GPU, but the bottleneck is that stupid dot product.
+
+# Super cool tip from http://deeplearning.net/software/theano/install_ubuntu.html
+python `python -c "import os, theano; print os.path.dirname(theano.__file__)"`/misc/check_blas.py
+
+######
+
+I managed to compile this gist on laptop:
+https://gist.github.com/xianyi/6930656
+gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers -L /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current -lblas -lpthread 
