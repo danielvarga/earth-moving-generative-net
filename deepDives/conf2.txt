@@ -1,11 +1,11 @@
 # parent deepDives/conf1.txt
 # learningRate 10 -> 1
-# this:
-# epoch 4800 trainMean 4.375416 trainMedian 4.522119 validationMean 4.346554 validationMedian 4.408077
-# epoch 20000 trainMean 4.258607 trainMedian 4.409981 validationMean 4.273648 validationMedian 4.319705
 # parent:
 # epoch 4800 trainMean 4.209222 trainMedian 4.325197 validationMean 4.234253 validationMedian 4.293222
 # epoch 30000 trainMean 4.135192 trainMedian 4.232051 validationMean 4.198376 validationMedian 4.211795
+# this:
+# epoch 4800 trainMean 4.375416 trainMedian 4.522119 validationMean 4.346554 validationMedian 4.408077
+# epoch 20000 trainMean 4.258607 trainMedian 4.409981 validationMean 4.273648 validationMedian 4.319705
 epochCount	100000
 everyNthInput	10
 expName	deepDives/conf2-hls200-inDim20-lr1-mom0.6-n300-os4.0

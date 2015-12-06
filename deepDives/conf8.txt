@@ -1,0 +1,25 @@
+# parent deepDives/conf6.txt
+# I call it tultoltam:
+# hiddenLayerSize 200 -> 600, minibatchSize 300 -> 600
+# parent:
+# epoch 4800 trainMean 3.909867 trainMedian 3.981797 validationMean 4.073384 validationMedian 4.109737
+# this:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+epochCount	16000
+everyNthInput	10
+expName	deepDives/conf8
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	400
+useReLU	True
+width	28

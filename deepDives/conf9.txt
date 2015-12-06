@@ -1,0 +1,25 @@
+# parent deepDives/conf8.txt
+# minibatchSize 600 -> 300, oversampling 4.0 -> 8.0
+# parent:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+# this:
+# epoch 2400 trainMean 3.724940 trainMedian 3.757624 validationMean 3.983316 validationMedian 4.018968
+# epoch 4800 trainMean 3.623366 trainMedian 3.650960 validationMean 3.984901 validationMedian 3.984115
+epochCount	16000
+everyNthInput	10
+expName	deepDives/conf9
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	300
+momentum	0.6
+oversampling	8.0
+plotEach	400
+useReLU	True
+width	28
