@@ -534,3 +534,11 @@ gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framewo
 # -> yay!
 
 # I tried allow_gc = False, but it didn't give real improvement, less than 10% for sure, probably even less.
+
+#######
+# Make spearmint work.
+
+#   File "/usr/local/lib/python2.7/dist-packages/pymongo/collection.py", line 393, in _legacy_write
+#     rqst_id, msg, max_size = func(*args)
+# bson.errors.InvalidDocument: Cannot encode object: 5.6012859
+# -> Solution is to cast from np.float32 to float.

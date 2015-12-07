@@ -338,6 +338,8 @@ def spearmintEntry(spearmintParams):
     # we can simply aggregate here: value = setupAndRun(params1) + setupAndRun(params2)
     # where params1 and params2 are the same except for imageDirectory or inputDigit or whatever (and expName).
     value = setupAndRun(params)
+    # np.float32 to float:
+    value = np.asscalar(value)
     return value
 
 def main():
