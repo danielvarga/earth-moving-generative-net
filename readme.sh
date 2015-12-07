@@ -542,3 +542,5 @@ gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framewo
 #     rqst_id, msg, max_size = func(*args)
 # bson.errors.InvalidDocument: Cannot encode object: 5.6012859
 # -> Solution is to cast from np.float32 to float.
+
+for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n
