@@ -324,7 +324,9 @@ def spearmintEntry(spearmintParams):
     for k,v in spearmintParams.iteritems():
         # v[0] because we only work with single values, and those are 1-element ndarrays in spearmint
         assert len(v)==1
-        params[k] = v[0]
+        # We want int32 and float32, not the 64bit versions provided by spearmint.
+        # http://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types/11389998#11389998
+	params[k] = np.asscalar(v[0])
     params.expName = "spearmintOutput/" + spearmintDirName(spearmintParams)
 
     try:
