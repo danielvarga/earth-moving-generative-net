@@ -1,0 +1,12 @@
+[global]
+device = gpu
+floatX = float32
+force_device=True
+warn_float64 = raise
+assert_no_cpu_op = raise
+
+[cuda]
+root = /usr/local/cuda-7.5/bin
+
+[nvcc]
+fastmath = True

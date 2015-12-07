@@ -519,6 +519,18 @@ python `python -c "import os, theano; print os.path.dirname(theano.__file__)"`/m
 
 ######
 
-I managed to compile this gist on laptop:
-https://gist.github.com/xianyi/6930656
+# I managed to compile this gist on laptop:
+open https://gist.github.com/xianyi/6930656
 gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers -L /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current -lblas -lpthread 
+
+######
+# Set up geforce machine with ubuntu.
+
+# See ./install.txt for every detail.
+
+# deepDives/conf8.txt benchmark, 4800 epochs:
+# 250 mins on laptop
+#  44 mins on geforce
+# -> yay!
+
+# I tried allow_gc = False, but it didn't give real improvement, less than 10% for sure, probably even less.
