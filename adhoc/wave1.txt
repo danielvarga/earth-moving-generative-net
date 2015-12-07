@@ -1,0 +1,21 @@
+# parent deepDives/conf8.txt
+# inputType mnist -> wave, useReLU True -> False, everyNthInput removed, inputDigit removed, trainSize added 40000, validSize added 5000
+epochCount	16000
+expName	adhoc/wave1
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inputType	wave
+layerNum	3
+learningRate	10
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	1
+trainSize	40000
+useReLU	False
+validSize	400
+waveCount	42
+width	28

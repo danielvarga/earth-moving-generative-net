@@ -77,7 +77,9 @@ def distanceMatrix(x, y):
     xL2SM = np.tile(xL2S, (len(y), 1))
     yL2SM = np.tile(yL2S, (len(x), 1))
     squaredDistances = xL2SM + yL2SM.T - 2.0*y.dot(x.T)
-    distances = np.sqrt(squaredDistances+1e-6) # elementwise. +1e-6 is to supress sqrt-of-negative warning.
+    # elementwise. abs is to supress negative values caused by rounding errors.
+    # TODO Should switch to squared distances everywhere, but be careful about fitAndVis fitAndVisNNBaseline.
+    distances = np.sqrt(np.abs(squaredDistances))
     return distances
 
 def optimalPairing(x, y):
