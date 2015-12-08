@@ -544,3 +544,10 @@ gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framewo
 # -> Solution is to cast from np.float32 to float.
 
 for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n
+
+#######
+# Let's see some simple synthetic generated distributions.
+# I've created a pretty general framework to play with those, see nnbase/inputs.py:GENERATOR_FUNCTIONS.
+# The coolest one so far is adhoc/plane1.txt , output in ~/tmp/daniel-experiments/kohonen/adhoc/plane1-d2/
+# and http://people.mokk.bme.hu/~daniel/kohonen/plane1.gif
+# in my mail titled "op art".

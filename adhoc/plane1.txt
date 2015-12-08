@@ -1,11 +1,11 @@
 # parent adhoc/wave2.txt
 epochCount	16000
-expName	adhoc/plane1
-gridSizeForInterpolation	30
+expName	adhoc/plane1-d2
+gridSizeForInterpolation	50
 gridSizeForSampling	20
 height	28
-hiddenLayerSize	600
-inDim	1
+hiddenLayerSize	100
+inDim	2
 inputType	plane
 layerNum	3
 learningRate	10
@@ -16,5 +16,4 @@ plotEach	10
 trainSize	40000
 useReLU	False
 validSize	400
-waveCount	42
 width	28
