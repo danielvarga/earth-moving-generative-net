@@ -14,6 +14,7 @@ import lasagne
 
 import kohonen
 import evaluate
+import testNumpyToTheano # TODO rename
 
 import nnbase.inputs
 import nnbase.vis
@@ -100,7 +101,7 @@ def constructTrainFunction(input_var, net, learningRate, momentum):
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
-def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
+def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None, closest_fn=None):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
@@ -117,19 +118,18 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None):
         initial = initial[permutation]
         sampled = sampled[permutation]
     else:
-        distances = kohonen.distanceMatrix(sampled, data)
-        assert distances.shape == (len(data), len(sampled)) # Beware the transpose!
-        findGenForData = True
-        if findGenForData:
-            # Counterintuitively, this seems to be better. Understand, verify.
+        # TODO We had this cool findGenForData=False experiment here
+        # TODO that didn't go anywhere at first, but we shouldn't let it go this easily.
+        # Counterintuitively, this seems to be better. Understand, verify.
+        if closest_fn is None:
+            distances = kohonen.distanceMatrix(sampled, data)
+            assert distances.shape == (len(data), len(sampled)) # Beware the transpose!
             bestIndices = np.argmin(distances, axis=1)
-            initial = initial[bestIndices]
-            sampled = sampled[bestIndices]
-            bestDists = distances.min(axis=1)
         else:
-            bestIndices = np.argmin(distances, axis=0)
-            data = data[bestIndices]
-            # TODO bestDists currently unimplemented here
+            bestIndices = closest_fn(sampled, data)
+        initial = initial[bestIndices]
+        sampled = sampled[bestIndices]
+        bestDists = np.ones_like(bestIndices) # distances.min(axis=1)
 
     # The idea is that big n is good because matches are close,
     # but big n is also bad because large minibatch sizes are generally bad.
@@ -179,6 +179,7 @@ def train(data, validation, params, logger=None):
 
     train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum)
     net_fn = constructSamplerFunction(input_var, net)
+    closest_fn = testNumpyToTheano.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
 
     # The reason for the +1 is that this way, if
     # epochCount is a multiple of plotEach, then the
@@ -188,7 +189,8 @@ def train(data, validation, params, logger=None):
         epochDistances = []
         for i in range(minibatchCount):
             dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
-            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, n=params.minibatchSize, data=dataBatch, m=m)
+            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim,
+                                                 n=params.minibatchSize, data=dataBatch, m=m, closest_fn=closest_fn)
             epochDistances.append(minibatchDistances)
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()

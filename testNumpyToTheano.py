@@ -71,6 +71,18 @@ def constructSDistanceMatrixFunction(n, m):
     sDistances = constructSquaredDistanceMatrixVariable(x, y, n, m)
     return theano.function([x, y], sDistances)
 
+# For each y returns the index of the closest x in L2 distance.
+def constructMinimalDistanceIndicesVariable(x, y, n, m):
+    sDistances = constructSquaredDistanceMatrixVariable(x, y, n, m)
+    bestIndices = T.argmin(sDistances, axis=0)
+    return bestIndices
+
+def constructMinimalDistanceIndicesFunction(n, m):
+    x = T.matrix('x')
+    y = T.matrix('y')
+    bestIndices = constructMinimalDistanceIndicesVariable(x, y, n, m)
+    return theano.function([x, y], bestIndices)
+
 def constructMinimalDistancesVariable(x, y, initials, n, m):
     sDistances = constructSquaredDistanceMatrixVariable(x, y, n, m)
     bestIndices = T.argmin(sDistances, axis=0)
@@ -184,5 +196,6 @@ def test():
     print np.sum(ds)
     end()
 
-# test()
-testSampleInitial()
+if __name__ == "__main__":
+    # test()
+    testSampleInitial()
