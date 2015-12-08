@@ -493,7 +493,7 @@ compiler_bindir = /usr/local/gcc/4.9.3/bin/
 # laptop: 55 sec including compilation.
 # geforce: 76 sec including compilation.
 
-# testNumpyToTheano.py:test() :
+# testNumpyToTheano.py:test()
 laptop cpu:
 minimal distances theano finished in 2.422537 seconds.
 all distances theano finished in 1.913697 seconds.
@@ -546,8 +546,63 @@ gcc -o a.out test_cblas_dgemm.c -I /System/Library/Frameworks/Accelerate.framewo
 for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n
 
 #######
+# Some parallel run benchmarks.
+
+# adhoc/speedtest.txt does not scale, running two in parallel takes twice longer,
+# even if they get gpu0 and gpu1 respectively.
+# 1 GPU 1 proc
+for GPU in 0 1 ; do for a in 1 ; do ( time THEANO_FLAGS="device=gpu$GPU" python generativeMLP.py adhoc/speedtest.txt & ) ; done ; done
+
+# 1 GPU 1 proc: 33.0 = 33.0/process
+# 1 GPU 2 proc: 64.0 = 32.0/proc
+# 2 GPU 2 proc: 64.0 = 32.0/proc
+# :(
+# Not very surprising, if I press Ctrl-C it always stops inside numpy,
+# and numpy presumably already uses all the CPU cores. (Does it?)
+# Let's do a less CPU-intense speedtest. This one always breaks inside theano.function:
+# adhoc/speedtestgpu.txt
+# 1 GPU 1 proc: 31.0 = 31.0/process
+# 1 GPU 2 proc: 59.0 = 29.5/proc
+# 2 GPU 2 proc: 63.0 = 31.5/proc
+# :( Now that's somewhat more surprising.
+
+
+# testNumpyToTheano.py:testSampleInitial() 10000 epoch 1000 data 1000 generated:
+# This one does scale nicely to 8 processes:
+for GPU in 0 1 ; do for a in 1 2 3 4 5 6 7 8 ; do ( time THEANO_FLAGS="device=gpu$GPU" python testNumpyToTheano.py > /dev/null & ) ; done ; done
+
+# 1 GPU 1 proc: 20.8 = 20.8/process
+# 1 GPU 2 proc: 21.6 = 10.8/proc
+# 1 GPU 4 proc: 27.0 =  6.7/proc (actually, the real runtimes were 23.1, 24.4, 25.6, 27.0)
+# 1 GPU 8 proc: 44.0 =  5.5/proc (actually, there was one outlier with 53.0 and the rest around 43.0)
+# 2 GPU 2 proc: 21.6 = 10.8/proc
+# 2 GPU 4 proc: 26.2 =  6.5/proc
+# 2 GPU 8 proc: 43.4 =  5.4/proc
+# 2 GPU 16proc: 88.0 =  5.5/proc
+
+# So the bottom line is that if you have a job, it doesn't matter
+# which GPU you send it to even if one is completely starving.
+# The only model that I have in mind that can explain this is
+# a fixed, non-parallelizable cost of sending data towards
+# ANY of the two GPUs. Like a Y shape with a bottleneck at the bottom,
+# closer to the CPU.
+
+#######
 # Let's see some simple synthetic generated distributions.
 # I've created a pretty general framework to play with those, see nnbase/inputs.py:GENERATOR_FUNCTIONS.
 # The coolest one so far is adhoc/plane1.txt , output in ~/tmp/daniel-experiments/kohonen/adhoc/plane1-d2/
 # and http://people.mokk.bme.hu/~daniel/kohonen/plane1.gif
 # in my mail titled "op art".
+
+
+#######
+# Meanwhile I've stopped the original spearmint run, archived it to
+# spearmintRuns/epochCount4800_depth3_4_useReLUTrue_everyNthInput10
+# and rewrote config.json so that it looks for higher values.
+# I call this exp epochCount4800_depth3_4_useReLUTrue_everyNthInput10_bigger
+
+THEANO_FLAGS='device=gpu1' nohup python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutput/log.cerr &
+# From now on gpu1 is the spearmint GPU. (Although if the above benchmarks are good,
+# it shouldn't matter, except maybe for OOM.)
+
+for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n

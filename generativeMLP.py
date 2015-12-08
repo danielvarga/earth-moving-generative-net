@@ -181,6 +181,8 @@ def train(data, validation, params, logger=None):
     net_fn = constructSamplerFunction(input_var, net)
     closest_fn = testNumpyToTheano.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
 
+    validationMean = 1e10 # ad hoc inf-like value.
+
     # The reason for the +1 is that this way, if
     # epochCount is a multiple of plotEach, then the
     # last thing that happens is an evaluation.

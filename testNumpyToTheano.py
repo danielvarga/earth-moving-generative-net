@@ -110,8 +110,8 @@ def constructMinimalDistancesFunction(n, m):
 # Of course that's less impressive than it first sounds, because
 # locally, the identity of the nearest target sample never changes.
 def testSampleInitial():
-    batchSize = 1000
-    sampleSize = 1000
+    batchSize = 2000
+    sampleSize = 2000
     inDim = 2
     srng = theano.sandbox.rng_mrg.MRG_RandomStreams(seed=234)
 

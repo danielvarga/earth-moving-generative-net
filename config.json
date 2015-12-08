@@ -1,7 +1,7 @@
 {
     "language"        : "PYTHON",
     "main-file"       : "spearmintTask.py",
-    "experiment-name" : "epochCount4800_depth3_4_useReLUTrue_everyNthInput10",
+    "experiment-name" : "epochCount4800_depth3_4_useReLUTrue_everyNthInput10_bigger",
     "variables" : {
         "learningRate" : {
             "type" : "FLOAT",
@@ -13,31 +13,31 @@
             "type" : "FLOAT",
             "size" : 1,
             "min"  : 0.5,
-            "max"  : 1.0
+            "max"  : 0.98
         },
         "minibatchSize" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 50,
-            "max"  : 300
+            "min"  : 300,
+            "max"  : 1000
         },
         "inDim" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 10,
-            "max"  : 50
+            "min"  : 50,
+            "max"  : 100
         },
         "hiddenLayerSize" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 10,
-            "max"  : 300
+            "min"  : 300,
+            "max"  : 1000
         },
         "oversampling" : {
             "type" : "FLOAT",
             "size" : 1,
-            "min"  : 0.5,
-            "max"  : 4.0
+            "min"  : 4.0,
+            "max"  : 8.0
         },
         "layerNum": {
             "type" : "INT",

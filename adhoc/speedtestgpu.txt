@@ -1,0 +1,20 @@
+# parent deepDives/conf8.txt
+# with a small epochCount and infinite plotEach for speed benchmarking.
+epochCount	50
+everyNthInput	10
+expName	adhoc/speedtestgpu
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	1000
+inDim	20
+inputDigit	None
+inputType	mnist
+layerNum	4
+learningRate	10
+minibatchSize	100
+momentum	0.6
+oversampling	1.0
+plotEach	100000
+useReLU	True
+width	28
