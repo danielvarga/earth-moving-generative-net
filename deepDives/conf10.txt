@@ -1,0 +1,28 @@
+# parent spearmintOutput/hls650-inDim75-layerNum3-lr10.5-mom0.74-n650-os6.0
+# within spearmintRun epochCount4800_depth3_4_useReLUTrue_everyNthInput10_bigger
+# only diffence is more data.
+# everyNthInput 10 -> 1, epochCount 4800 -> 960, plotEach 800 -> 80
+# parent:
+# epoch 4800 trainMean 3.614238 trainMedian 3.647176 validationMean 3.950973 validationMedian 3.987011
+# this:
+# epoch 480 trainMean 3.849584 trainMedian 3.910133 validationMean 3.801794 validationMedian 3.858063
+# (not directly comparable of course, more diverse training data here.
+# See the cool reverse in train and validation performance.)
+epochCount	960
+everyNthInput	1
+expName	deepDives/conf10
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	650
+inDim	75
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10.5
+minibatchSize	650
+momentum	0.74
+oversampling	6.0
+plotEach	80
+useReLU	True
+width	28

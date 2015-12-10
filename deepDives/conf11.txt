@@ -1,0 +1,28 @@
+# parent deepDives/conf10.txt
+# playing with decreasing learning rate until I get to
+# implement learning rate decay.
+# learningRate 10.5 -> 1.0 epochCount 960 -> 9600
+# parent:
+# epoch 480 trainMean 3.849584 trainMedian 3.910133 validationMean 3.801794 validationMedian 3.858063
+# this:
+# epoch 4800 trainMean 3.872003 trainMedian 3.936070 validationMean 3.811173 validationMedian 3.884217
+# (Note that these are more or less directly comparable because of the epochCount/learningRate trade-off.
+# Also, considering the uncertainty, these are identical.)
+epochCount	9600
+everyNthInput	1
+expName	deepDives/conf11
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	650
+inDim	75
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1.0
+minibatchSize	650
+momentum	0.74
+oversampling	6.0
+plotEach	80
+useReLU	True
+width	28

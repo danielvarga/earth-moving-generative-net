@@ -607,9 +607,20 @@ THEANO_FLAGS='device=gpu1' nohup python Spearmint/spearmint/main.py . > spearmin
 
 for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n
 
-
 #######
 # Did a less complete but still useful way to put distance matrix calculation on the GPU.
 
 # Makes large oversampling large minibatchSize runs about 3 times faster on geforce,
 # does not make a difference on the laptop.
+
+
+# It's not really a bottleneck now, but this CPU-based argmin is really annoying:
+THEANO_FLAGS='config.profile=True' CUDA_LAUNCH_BLOCKING=1 python nearestNeighborsTest.py > cout 2> cerr
+
+# I asked the theano-users list:
+https://groups.google.com/forum/#!topic/theano-users/E7ProqnGUMk
+https://gist.github.com/danielvarga/d0eeacea92e65b19188c
+
+#######
+# Turns out reducing the learning rate does nothing but make convergence proportionally slower. Weird.
+# See deepDives/conf11.txt for a bit more detail.

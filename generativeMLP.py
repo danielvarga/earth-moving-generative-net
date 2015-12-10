@@ -354,6 +354,9 @@ def main():
     # mainLowDim(params.expName, params.minibatchSize)
 
 if __name__ == "__main__":
-    # import cProfile
-    # cProfile.run("main()", "pstats")
-    main()
+    doCPUProfile = False
+    if doCPUProfile:
+        import cProfile
+        cProfile.run("main()", "pstats")
+    else:
+        main()
