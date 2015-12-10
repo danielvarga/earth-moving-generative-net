@@ -1,0 +1,21 @@
+# parent adhoc/wave1.txt
+epochCount	16000
+expName	adhoc/sine1
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	100
+inBoolDim	0
+inDim	2
+initialSD	2.0
+inputType	sine
+layerNum	3
+learningRate	10
+minibatchSize	100
+momentum	0.6
+oversampling	1.0
+plotEach	100
+trainSize	40000
+useReLU	False
+validSize	400
+width	28
