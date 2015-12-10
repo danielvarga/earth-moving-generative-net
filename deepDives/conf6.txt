@@ -13,6 +13,8 @@ gridSizeForSampling	20
 height	28
 hiddenLayerSize	200
 inDim	20
+inBoolDim	0
+initialSD	0.25
 inputDigit	None
 inputType	mnist
 layerNum	3

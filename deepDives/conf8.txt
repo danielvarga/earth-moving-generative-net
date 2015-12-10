@@ -7,12 +7,14 @@
 # epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
 epochCount	16000
 everyNthInput	10
-expName	deepDives/conf8-nogc
+expName	deepDives/conf8
 gridSizeForInterpolation	30
 gridSizeForSampling	20
 height	28
 hiddenLayerSize	600
 inDim	20
+inBoolDim	0
+initialSD	0.25
 inputDigit	None
 inputType	mnist
 layerNum	3

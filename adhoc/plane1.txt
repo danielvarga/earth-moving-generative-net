@@ -5,7 +5,9 @@ gridSizeForInterpolation	50
 gridSizeForSampling	20
 height	28
 hiddenLayerSize	100
+inBoolDim	0
 inDim	2
+initialSD	0.25
 inputType	plane
 layerNum	3
 learningRate	10

@@ -6,7 +6,9 @@ gridSizeForInterpolation	30
 gridSizeForSampling	20
 height	28
 hiddenLayerSize	600
+inBoolDim	0
 inDim	20
+initialSD	0.25
 inputType	wave
 layerNum	3
 learningRate	10

@@ -5,7 +5,9 @@ gridSizeForInterpolation	30
 gridSizeForSampling	20
 height	28
 hiddenLayerSize	100
+inBoolDim	0
 inDim	2
+initialSD	2.0
 inputType	clock
 layerNum	3
 learningRate	10

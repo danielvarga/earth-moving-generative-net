@@ -75,15 +75,14 @@ def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
             W=lasagne.init.GlorotUniform(gain=gain))
     return l_out
 
-def sampleInitial(n, inDim):
-    return np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim)).astype(np.float32)
-    # The old cubemixture model is now unreachable:
-    discrete = np.random.randint(0, 2, (n, inDim))
-    continuous = np.random.normal(loc=0.0, scale=1.0/4, size=(n, inDim))
-    return discrete + continuous
+def sampleInitial(n, inDim, sd, inBoolDim):
+    continuous = np.random.normal(loc=0.0, scale=sd, size=(n, inDim)).astype(np.float32)
+    discrete = np.random.randint(0, 2, (n, inBoolDim))
+    continuous[:, :inBoolDim] += discrete
+    return continuous
 
-def sampleSource(net_fn, n, inDim):
-    initial = sampleInitial(n, inDim)
+def sampleSourceParametrized(net_fn, n, inDim, sd, inBoolDim):
+    initial = sampleInitial(n, inDim, sd, inBoolDim)
     return initial, net_fn(initial)
 
 def constructSamplerFunction(input_var, net):
@@ -101,7 +100,7 @@ def constructTrainFunction(input_var, net, learningRate, momentum):
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
-def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None, closest_fn=None):
+def sampleAndUpdate(train_fn, net_fn, inDim, sampleSource, n, data=None, m=None, closest_fn=None):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
@@ -171,6 +170,8 @@ def train(data, validation, params, logger=None):
     net_fn = constructSamplerFunction(input_var, net)
     closest_fn = distances.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
 
+    sampleSource = lambda net_fn, n, inDim: sampleSourceParametrized(net_fn, n, inDim, params.initialSD, params.inBoolDim)
+
     validationMean = 1e10 # ad hoc inf-like value.
 
     # The reason for the +1 is that this way, if
@@ -181,7 +182,7 @@ def train(data, validation, params, logger=None):
         epochDistances = []
         for i in range(minibatchCount):
             dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
-            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim,
+            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, sampleSource,
                                                  n=params.minibatchSize, data=dataBatch, m=m, closest_fn=closest_fn)
             epochDistances.append(minibatchDistances)
         epochDistances = np.array(epochDistances)
@@ -242,11 +243,11 @@ def setupAndRun(params):
 
     return value
 
-def sampleAndPlot(net_fn, inDim, n, name):
-    initial, sampled = sampleSource(net_fn, n, inDim)
+def sampleAndPlot(net_fn, inDim, initialSD, inBoolDim, n, name):
+    initial, sampled = sampleSourceParametrized(net_fn, n, inDim, initialSD, inBoolDim)
     nnbase.vis.plot(sampled, name)
 
-def mainLowDim(expName, minibatchSize):
+def mainLowDim(expName, minibatchSize, initialSD):
     inDim = 2
     outDim = 2
     layerNum = 3
@@ -259,7 +260,7 @@ def mainLowDim(expName, minibatchSize):
         print i,
         sys.stdout.flush()
         sampleAndUpdate(train_fn, net_fn, inDim, n=minibatchSize)
-        sampleAndPlot(net_fn, inDim, 1000, expName+"/d"+str(i))
+        sampleAndPlot(net_fn, inDim, initialSD, 1000, expName+"/d"+str(i))
     print
 
 
@@ -282,6 +283,8 @@ def setDefaultParams():
         assert False, "unknown inputType"
 
     params.inDim = 4
+    params.inBoolDim = 0
+    params.initialSD = 0.25
     params.minibatchSize = 100
     # m = oversampling*minibatchSize, that's how many
     # generated samples do we pair with our minibatchSize gold samples.
