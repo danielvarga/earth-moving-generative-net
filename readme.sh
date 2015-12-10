@@ -606,3 +606,10 @@ THEANO_FLAGS='device=gpu1' nohup python Spearmint/spearmint/main.py . > spearmin
 # it shouldn't matter, except maybe for OOM.)
 
 for f in spearmintOutput/*/log.txt ; do grep "train" $f | tail -1 | cut -f8 -d' ' | tr '\n' ' ' ; echo $f ; done | sort -n
+
+
+#######
+# Did a less complete but still useful way to put distance matrix calculation on the GPU.
+
+# Makes large oversampling large minibatchSize runs about 3 times faster on geforce,
+# does not make a difference on the laptop.

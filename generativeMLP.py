@@ -12,9 +12,9 @@ import theano
 import theano.tensor as T
 import lasagne
 
-import kohonen
+import kohonen # TODO This should only be used on the abandoned bipartiteMatchingBased==True codepath.
 import evaluate
-import testNumpyToTheano # TODO rename
+import distances
 
 import nnbase.inputs
 import nnbase.vis
@@ -112,24 +112,19 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None, closest_fn=No
     initial, sampled = sampleSource(net_fn, m, inDim)
     bipartiteMatchingBased = False
     if bipartiteMatchingBased:
+        # Pretty much obsoleted, because it can't be made fast.
+        # Does a full weighted bipartite matching.
+        # Left here for emotional reasons.
         permutation = kohonen.optimalPairing(sampled, data)
-        # If fudge>1 then this is not in fact a permutation, but it's still meaningful.
-        # Never played with it, though.
         initial = initial[permutation]
         sampled = sampled[permutation]
     else:
         # TODO We had this cool findGenForData=False experiment here
         # TODO that didn't go anywhere at first, but we shouldn't let it go this easily.
-        # Counterintuitively, this seems to be better. Understand, verify.
-        if closest_fn is None:
-            distances = kohonen.distanceMatrix(sampled, data)
-            assert distances.shape == (len(data), len(sampled)) # Beware the transpose!
-            bestIndices = np.argmin(distances, axis=1)
-        else:
-            bestIndices = closest_fn(sampled, data)
+        bestIndices = closest_fn(sampled, data)
         initial = initial[bestIndices]
         sampled = sampled[bestIndices]
-        bestDists = np.ones_like(bestIndices) # distances.min(axis=1)
+        bestDists = np.linalg.norm(data-sampled, axis=1)
 
     # The idea is that big n is good because matches are close,
     # but big n is also bad because large minibatch sizes are generally bad.
@@ -145,11 +140,6 @@ def sampleAndUpdate(train_fn, net_fn, inDim, n, data=None, m=None, closest_fn=No
 
     # That's where the update happens.
     train_fn(initial, data)
-
-    doPlot = False
-    if doPlot:
-        # This goes to a different dir as the function does not access params.expName.
-        nnbase.vis.plotGradients(data, sampled, initial, net_fn, "grad")
 
     # These values are a byproduct of the training step,
     # so they are from _before_ the training, not after it.
@@ -179,7 +169,7 @@ def train(data, validation, params, logger=None):
 
     train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum)
     net_fn = constructSamplerFunction(input_var, net)
-    closest_fn = testNumpyToTheano.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
+    closest_fn = distances.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
 
     validationMean = 1e10 # ad hoc inf-like value.
 
@@ -211,10 +201,10 @@ def train(data, validation, params, logger=None):
                 visualizedValidation = validation[:visImageCount]
                 visualizedData = data[:visImageCount]
                 trainMean, trainMedian = evaluate.fitAndVis(visualizedData,
-                                              net_fn, sampleSource, params.inDim,
+                                              net_fn, closest_fn, sampleSource, params.inDim,
                                               height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
                 validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
-                                              net_fn, sampleSource, params.inDim,
+                                              net_fn, closest_fn, sampleSource, params.inDim,
                                               height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
                 print >> logger, "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
                     epoch, trainMean, trainMedian, validationMean, validationMedian)

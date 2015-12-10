@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 import lasagne
 
-import kohonen
+import distances
 import nnbase.vis
 
 # TODO If this functionality is important,
@@ -12,27 +12,24 @@ import nnbase.vis
 # TODO together with the workhorse kohonen.distanceMatrix().
 # TODO Especially if the gradient descent based finetuning comes in.
 
-def approximateMinibatch(data, net_fn, sampleSourceFunction, inDim, sampleForEach):
+def approximateMinibatch(data, net_fn, closest_fn, sampleSourceFunction, inDim, sampleForEach):
     n = len(data)
     initial, sampled = sampleSourceFunction(net_fn, sampleForEach, inDim)
-    distanceMatrix = kohonen.distanceMatrix(sampled, data)
-    bestDists = np.argmin(distanceMatrix, axis=1)
-    distances = np.min(distanceMatrix, axis=1)
-    initial = initial[bestDists]
-    sampled = sampled[bestDists]
+    bestDistIndices = closest_fn(sampled, data)
+    sampled = sampled[bestDistIndices]
+    distances = np.linalg.norm(data-sampled, axis=1)
     return initial, sampled, distances
 
 # For each validation sample we find the closest train sample.
-def approximateFromTrain(train, validation):
-    distanceMatrix = kohonen.distanceMatrix(train, validation)
-    bestDists = np.argmin(distanceMatrix, axis=1)
-    distances = np.min(distanceMatrix, axis=1)
-    nearests = train[bestDists]
+def approximateFromTrain(train, validation, closest_fn):
+    bestDistIndices = closest_fn(train, validation)
+    nearests = train[bestDistIndices]
+    distances = np.linalg.norm(validation-nearests, axis=1)
     return nearests, distances
 
 # We generate sampleTotal data points, and for each gold data point
 # we find the closest generated one.
-def approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal):
+def approximate(data, net_fn, closest_fn, sampleSourceFunction, inDim, sampleTotal):
     bestInitial, bestSampled, bestDistances = None, None, None
     # approximate_minibatch builds a matrix of size (len(data), sampleForEachMinibatch).
     # We want this matrix to fit into memory.
@@ -40,7 +37,7 @@ def approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal):
     sampleForEachMinibatch = distanceMatrixSizeLimit / len(data)
     batchCount = sampleTotal / sampleForEachMinibatch + 1
     for indx in xrange(batchCount):
-        initial, sampled, distances = approximateMinibatch(data, net_fn, sampleSourceFunction, inDim, sampleForEachMinibatch)
+        initial, sampled, distances = approximateMinibatch(data, net_fn, closest_fn, sampleSourceFunction, inDim, sampleForEachMinibatch)
         if bestDistances is None:
             bestInitial, bestSampled, bestDistances = initial, sampled, distances
         else:
@@ -52,14 +49,14 @@ def approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal):
                     bestDistances[i] = distances[i]
     return bestInitial, bestSampled, bestDistances
 
-def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSizeForSampling, name):
+def fitAndVis(data, net_fn, closest_fn, sampleSourceFunction, inDim, height, width, gridSizeForSampling, name):
     n = len(data)
     n_x = gridSizeForSampling
     n_y = gridSizeForSampling
     assert n <= n_x * n_y
     sampleTotal = int(1e5)
 
-    initial, sampled, distances = approximate(data, net_fn, sampleSourceFunction, inDim, sampleTotal)
+    initial, sampled, distances = approximate(data, net_fn, closest_fn, sampleSourceFunction, inDim, sampleTotal)
 
     # TODO The smart thing here would be to run a gradient descent
     # TODO on initial, further minimizing distances.
@@ -77,13 +74,13 @@ def fitAndVis(data, net_fn, sampleSourceFunction, inDim, height, width, gridSize
 
 # NN as in nearest neighbor.
 # A refactor with fitAndVis would be nice, but not a priority now.
-def fitAndVisNNBaseline(train, validation, height, width, gridSizeForSampling, name):
+def fitAndVisNNBaseline(train, validation, closest_fn, height, width, gridSizeForSampling, name):
     n = len(validation)
     n_x = gridSizeForSampling
     n_y = gridSizeForSampling
     assert n <= n_x * n_y
 
-    nearests, distances = approximateFromTrain(train, validation)
+    nearests, distances = approximateFromTrain(train, validation, closest_fn)
 
     nnbase.vis.plot_distance_histogram(distances, name.replace("diff", "hist"))
 
@@ -96,13 +93,15 @@ def fitAndVisNNBaseline(train, validation, height, width, gridSizeForSampling, n
     return meanDist, medianDist
 
 # Again, as in regular fitAndVis(), the mixing of fit and vis causes
-# this stupid constraint on validation set size.
+# this stupid constraint on validation set size. TODO Should refactor.
 def fitAndVisNNBaselineMain(train, validation, params):
     n = params.gridSizeForSampling ** 2
     train = nnbase.inputs.flattenImages(train)
     validation = nnbase.inputs.flattenImages(validation)
     visualizedValidation = validation[:n]
-    meanDist, medianDist = fitAndVisNNBaseline(train, visualizedValidation, params.height, params.width,
+    # TODO Don't forget to set len(visualizedValidation) to something larger after the refactor.
+    closest_fn = distances.constructMinimalDistanceIndicesFunction(len(train), len(visualizedValidation))
+    meanDist, medianDist = fitAndVisNNBaseline(train, visualizedValidation, closest_fn, params.height, params.width,
                                                params.gridSizeForSampling, params.expName+"/diff_nnbaseline")
     return meanDist, medianDist
 
