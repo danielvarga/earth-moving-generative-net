@@ -621,6 +621,27 @@ THEANO_FLAGS='config.profile=True' CUDA_LAUNCH_BLOCKING=1 python nearestNeighbor
 https://groups.google.com/forum/#!topic/theano-users/E7ProqnGUMk
 https://gist.github.com/danielvarga/d0eeacea92e65b19188c
 
+# Later found that this is the relevant ticket:
+https://github.com/Theano/Theano/issues/1399
+# Implemented lamblin's hack there, see the gist above.
+
+# 25000 candidate, 5000 target:
+lamblinsTrick = False
+  Time in Function.fn.__call__: 8.231399e-01s (99.995%)
+<% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
+  79.6%    79.6%       0.654s       6.54e-01s     C        1       1   theano.tensor.basic.MaxAndArgmax
+  13.5%    93.1%       0.111s       1.11e-01s     C        1       1   theano.sandbox.cuda.basic_ops.HostFromGpu
+   4.2%    97.3%       0.034s       3.42e-02s     C        1       1   theano.sandbox.cuda.blas.GpuDot22Scalar
+
+lamblinsTrick = True
+  Time in Function.fn.__call__: 7.972190e-01s (99.994%)
+<% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
+  41.9%    41.9%       0.333s       3.33e-01s     C        1       1   theano.tensor.elemwise.Sum
+  35.9%    77.8%       0.285s       2.85e-01s     C        1       1   theano.tensor.elemwise.Elemwise
+  12.4%    90.1%       0.098s       4.92e-02s     C        2       2   theano.sandbox.cuda.basic_ops.HostFromGpu
+   4.3%    94.5%       0.034s       3.45e-02s     C        1       1   theano.sandbox.cuda.blas.GpuDot22Scalar
+
+
 #######
 # Turns out reducing the learning rate does nothing but make convergence proportionally slower. Weird.
 # See deepDives/conf11.txt for a bit more detail.

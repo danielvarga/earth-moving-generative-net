@@ -24,8 +24,21 @@ yL2S = T.sum(y*y, axis=-1) # [m]
 xL2SM = T.zeros((m, n)) + xL2S # broadcasting, [m, n]
 yL2SM = T.zeros((n, m)) + yL2S # # broadcasting, [n, m]
 squaredPairwiseDistances = xL2SM.T + yL2SM - 2.0*T.dot(x, y.T) # [n, m]
-bestIndices = T.argmin(squaredPairwiseDistances, axis=0)
+
+np.random.seed(1)
+
+N = randomMatrix(n, f)
+M = randomMatrix(m, f)
+
+lamblinsTrick = True
+
+if lamblinsTrick:
+    # from https://github.com/Theano/Theano/issues/1399
+    s = squaredPairwiseDistances
+    bestIndices = ( T.arange(n).dimshuffle(0, 'x') * T.eq(s, s.min(axis=0, keepdims=True)) ).sum(axis=0, acc_dtype='int32')
+else:
+    bestIndices = T.argmin(squaredPairwiseDistances, axis=0)
 
 nearests_fn = theano.function([x, y], bestIndices, profile=True)
 
-print nearests_fn(randomMatrix(n, f), randomMatrix(m, f)).shape
+print nearests_fn(N, M).sum()
