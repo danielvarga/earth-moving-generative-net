@@ -35,7 +35,7 @@ lamblinsTrick = True
 if lamblinsTrick:
     # from https://github.com/Theano/Theano/issues/1399
     s = squaredPairwiseDistances
-    bestIndices = ( T.arange(n).dimshuffle(0, 'x') * T.eq(s, s.min(axis=0, keepdims=True)) ).sum(axis=0, acc_dtype='int32')
+    bestIndices = T.cast( ( T.arange(n).dimshuffle(0, 'x') * T.cast(T.eq(s, s.min(axis=0, keepdims=True)), 'float32') ).sum(axis=0), 'int32')
 else:
     bestIndices = T.argmin(squaredPairwiseDistances, axis=0)
 

@@ -633,7 +633,7 @@ lamblinsTrick = False
   13.5%    93.1%       0.111s       1.11e-01s     C        1       1   theano.sandbox.cuda.basic_ops.HostFromGpu
    4.2%    97.3%       0.034s       3.42e-02s     C        1       1   theano.sandbox.cuda.blas.GpuDot22Scalar
 
-lamblinsTrick = True
+lamblinsTrick = True # UPDATE: Mis-implemented, see below
   Time in Function.fn.__call__: 7.972190e-01s (99.994%)
 <% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
   41.9%    41.9%       0.333s       3.33e-01s     C        1       1   theano.tensor.elemwise.Sum
@@ -641,6 +641,15 @@ lamblinsTrick = True
   12.4%    90.1%       0.098s       4.92e-02s     C        2       2   theano.sandbox.cuda.basic_ops.HostFromGpu
    4.3%    94.5%       0.034s       3.45e-02s     C        1       1   theano.sandbox.cuda.blas.GpuDot22Scalar
 
+lamblinsTrick = True # UPDATE: Correctly implemented this time.
+  Time in Function.fn.__call__: 9.521604e-02s (99.951%)
+<% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
+  36.3%    36.3%       0.034s       3.42e-02s     C        1       1   theano.sandbox.cuda.blas.GpuDot22Scalar
+  35.3%    71.5%       0.033s       8.33e-03s     C        4       4   theano.sandbox.cuda.basic_ops.GpuElemwise
+  20.8%    92.3%       0.020s       4.91e-03s     C        4       4   theano.sandbox.cuda.basic_ops.GpuCAReduce
+   7.6%   100.0%       0.007s       3.61e-03s     C        2       2   theano.sandbox.cuda.basic_ops.GpuFromHost
+
+# Now we are talking.
 
 #######
 # Turns out reducing the learning rate does nothing but make convergence proportionally slower. Weird.
