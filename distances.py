@@ -66,7 +66,18 @@ def constructSDistanceMatrixFunction(n, m):
 # x is [n, f], y is [m, f] for some f. Output is [m], the values are in range(n).
 def constructMinimalDistanceIndicesVariable(x, y, n, m):
     sDistances = constructSquaredDistanceMatrixVariable(x, y, n, m)
-    bestIndices = T.argmin(sDistances, axis=0)
+    lamblinsTrick = False
+    if lamblinsTrick:
+        # https://github.com/Theano/Theano/issues/1399
+        # https://gist.github.com/danielvarga/d0eeacea92e65b19188c
+        # https://groups.google.com/forum/#!topic/theano-users/E7ProqnGUMk
+        s = sDistances
+        bestIndices = T.cast( ( T.arange(n).dimshuffle(0, 'x') * T.cast(T.eq(s, s.min(axis=0, keepdims=True)), 'float32') ).sum(axis=0), 'int32')
+        # This is a heavy-handed workaround for the fact that in
+        # lamblin's hack, ties lead to completely screwed results.
+        bestIndices = T.clip(bestIndices, 0, n-1)
+    else:
+        bestIndices = T.argmin(sDistances, axis=0)
     return bestIndices
 
 
@@ -177,6 +188,7 @@ def distanceSpeedTest():
     oversampling = 4.324
     sampleSize = int(batchSize*oversampling)
     f = 28*28
+    np.random.seed(0)
     data = randomMatrix(batchSize, f)
     generated = randomMatrix(sampleSize, f)
 
