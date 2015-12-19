@@ -654,3 +654,8 @@ lamblinsTrick = True # UPDATE: Correctly implemented this time.
 #######
 # Turns out reducing the learning rate does nothing but make convergence proportionally slower. Weird.
 # See deepDives/conf11.txt for a bit more detail.
+
+#######
+# Playing with leaky relus. They indeed seem to help avoiding burnt out neurons.
+# The default 0.01 leakiness seems to be okay, see
+# adhoc/spearmint-best-leaky.txt and adhoc/spearmint-best-leaky0.1.txt

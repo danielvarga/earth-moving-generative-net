@@ -1,0 +1,27 @@
+# identical to spearmint-best-leaky, but with extra leakiness:
+# reLULeakiness 0.01 -> 0.1
+# parent:
+# epoch 4800 trainMean 3.556957 trainMedian 3.631534 validationMean 3.892525 validationMedian 3.911150
+# this:
+# epoch 4800 trainMean 3.640023 trainMedian 3.720077 validationMean 3.930313 validationMedian 3.919364
+epochCount	9600
+everyNthInput	10
+expName	adhoc/spearmint-best-leaky0.1
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	673
+inBoolDim	0
+inDim	50
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+reLULeakiness	0.1
+learningRate	1.0
+minibatchSize	1000
+momentum	0.969849416169
+oversampling	8.0
+plotEach	800
+useReLU	True
+width	28

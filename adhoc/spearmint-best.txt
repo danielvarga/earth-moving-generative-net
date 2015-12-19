@@ -1,0 +1,22 @@
+# spearmintOutput/hls673-inDim50-layerNum3-lr1.0-mom0.969849416169-n1000-os8.0
+# epoch 4800 trainMean 3.591231 trainMedian 3.657815 validationMean 3.887801 validationMedian 3.889197
+epochCount	4800
+everyNthInput	10
+expName	adhoc/spearmint-best
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	673
+inBoolDim	0
+inDim	50
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1.0
+minibatchSize	1000
+momentum	0.969849416169
+oversampling	8.0
+plotEach	800
+useReLU	True
+width	28

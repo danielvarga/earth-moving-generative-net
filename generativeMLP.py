@@ -31,10 +31,14 @@ def logg(*ss):
     sys.stderr.write(s+"\n")
 
 
-def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU):
+def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU, leakiness=0.0):
     if useReLU:
-        nonlinearity = lasagne.nonlinearities.rectify
-        gain = 'relu'
+        if leakiness==0.0:
+            nonlinearity = lasagne.nonlinearities.rectify
+            gain = 'relu'
+        else:
+            nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness)
+            gain = math.sqrt(2/(1+leakiness**2))
     else:
         nonlinearity = lasagne.nonlinearities.tanh
         gain = 1.0
@@ -173,7 +177,11 @@ def train(data, validation, params, logger=None):
 
     outDim = height*width
     input_var = T.matrix('inputs')
-    net = buildNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim, useReLU=params.useReLU)
+    leakiness = 0.0 if 'reLULeakiness' not in params else params.reLULeakiness
+    if not params.useReLU:
+        assert leakiness==0.0, "reLULeakiness not allowed for tanh activation"
+    net = buildNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim,
+                   useReLU=params.useReLU, leakiness=leakiness)
 
     minibatchCount = len(data)/params.minibatchSize
 
