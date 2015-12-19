@@ -95,8 +95,19 @@ def constructTrainFunction(input_var, net, learningRate, momentum):
     data_var = T.matrix('targets')
     loss = lasagne.objectives.squared_error(output, data_var).mean()
     params = lasagne.layers.get_all_params(net, trainable=True)
+
     updates = lasagne.updates.nesterov_momentum(
             loss, params, learning_rate=learningRate, momentum=momentum)
+    # The rmsprop update rule is tricky. Properties (as measured on conf8):
+    # - Converges twice as fast at the beginning.
+    # - Goes way below nesterov on trainMean.
+    # - ...which implies that s*.png is visually better, but that's just overfitting, because it
+    #   - reaches approx. the same performance as nesterov on validationMean,
+    #   - and visually it does not improve on diff_validation after convergence on validationMean.
+    # - Performance has a hockey-stick dependence on epsilon:
+    #   Smaller epsilon is better until 0.0001, and then at 0.00001 it explodes.
+    # updates = lasagne.updates.rmsprop(loss, params, epsilon=0.0001)
+
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
