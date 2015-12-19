@@ -9,9 +9,9 @@ inBoolDim	0
 inDim	2
 initialSD	2.0
 inputType	sine
-layerNum	3
+layerNum	4
 learningRate	10
-minibatchSize	100
+minibatchSize	500
 momentum	0.6
 oversampling	1.0
 plotEach	100
