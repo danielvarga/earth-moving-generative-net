@@ -193,6 +193,12 @@ def train(data, validation, params, logger=None):
         epochDistances = []
         for i in range(minibatchCount):
             dataBatch = shuffledData[i*params.minibatchSize:(i+1)*params.minibatchSize]
+
+            # The issue with using a minibatchSize that's not a divisor of corpus size
+            # is that m is calculated before the epoch loop. This is not trivial to fix,
+            # because constructMinimalDistanceIndicesFunction gets n and m as args.
+            assert params.minibatchSize==len(dataBatch)
+
             minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, sampleSource,
                                                  n=params.minibatchSize, data=dataBatch, m=m, closest_fn=closest_fn)
             epochDistances.append(minibatchDistances)

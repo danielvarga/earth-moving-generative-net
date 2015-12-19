@@ -46,6 +46,10 @@ def distanceMatrix(x, y):
 # Newer theano builds allow tile() with scalar variable as reps.
 # https://github.com/Theano/Theano/pull/2875
 # That could make this nicer.
+# The worst thing about it is that it the constructed calculation
+# silently fails when given smaller datasets.
+# TODO If there's no easy fix, at least wrap closest_fn into
+# a mini-class that verifies sizes.
 def constructSquaredDistanceMatrixVariable(x, y, n, m):
     # ([n, f] , [m, f]) -> (n, m)
     xL2S = T.sum(x*x, axis=-1) # [n]
