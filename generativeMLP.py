@@ -364,19 +364,22 @@ def setDefaultParams():
     else:
         assert False, "unknown inputType"
 
-    params.inDim = 4
+    # values coming from adhoc/spearmint-best-leaky.txt
+
+    params.inDim = 50
     params.inBoolDim = 0
     params.initialSD = 0.25
-    params.minibatchSize = 100
+    params.minibatchSize = 1000
     # m = oversampling*minibatchSize, that's how many
     # generated samples do we pair with our minibatchSize gold samples.
-    params.oversampling = 1.0
-    params.hiddenLayerSize = 100
-    params.layerNum = 2
+    params.oversampling = 8.0
+    params.hiddenLayerSize = 673 
+    params.layerNum = 3
     params.useReLU = True
-    params.learningRate = 0.2
-    params.momentum = 0.5
-    params.epochCount = 4800
+    params.reLULeakiness = 0.01
+    params.learningRate = 1.0
+    params.momentum = 0.969849416169
+    params.epochCount = 6400
     params.plotEach = 800
     return params
 
