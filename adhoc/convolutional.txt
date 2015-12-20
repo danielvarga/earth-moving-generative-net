@@ -1,9 +1,11 @@
-# parent adhoc/spearmint-best.txt , the clone of
+# Using a convolutional architecture based on the upper half of
+# ../lasagne-demo/mnist_conv_autoencode.py
+# parent is adhoc/spearmint-best.txt , the clone of
 # spearmintOutput/hls673-inDim50-layerNum3-lr1.0-mom0.969849416169-n1000-os8.0
 # parent:
 # epoch 4800 trainMean 3.598628 trainMedian 3.688720 validationMean 3.907617 validationMedian 3.926451
 # this:
-# ?
+# epoch 4800 trainMean 4.240630 trainMedian 4.336588 validationMean 4.238855 validationMedian 4.282310
 convolutional	True
 epochCount	4800
 everyNthInput	10
