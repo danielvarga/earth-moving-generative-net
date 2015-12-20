@@ -659,3 +659,25 @@ lamblinsTrick = True # UPDATE: Correctly implemented this time.
 # Playing with leaky relus. They indeed seem to help avoiding burnt out neurons.
 # The default 0.01 leakiness seems to be okay, see
 # adhoc/spearmint-best-leaky.txt and adhoc/spearmint-best-leaky0.1.txt
+
+#######
+# Setting up a new spearmint run. Manual steps:
+EXPNAME=regularization_initialSD
+# commit this EXPNAME to kohonen/config.json
+# set kohonen/generativeMLP.py:setDefaultParams() very-very carefully.
+cd ~/spearmintClones/
+mkdir $EXPNAME
+cd $EXPNAME
+git clone git@github.com:danielvarga/daniel-experiments.git
+cd daniel-experiments/kohonen
+ln -s ~/Spearmint .
+mkdir ../rbm/data
+ln -s ~/daniel-experiments/rbm/data/mnist.pkl.gz ../rbm/data/
+mkdir spearmintOutput
+# If not the first try:
+Spearmint/spearmint/cleanup.sh .
+# Maybe also rm -rf spearmintOutput/* , but careful.
+nohup python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmintOutput/log.cerr &
+# Carefully check output/00000001.out and spearmintOutput/log.cerr .
+# Carefully check spearmintOutput/*/conf.txt and spearmintOutput/*/log.txt
+# Wait.
