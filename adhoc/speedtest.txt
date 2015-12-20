@@ -1,6 +1,8 @@
 # parent deepDives/conf8.txt
 # with a small epochCount and infinite plotEach for speed benchmarking.
-epochCount	50
+# this:
+# epoch 100 trainMean 4.712180 trainMedian 4.785045 validationMean 4.664932 validationMedian 4.719368
+epochCount	100
 everyNthInput	10
 expName	adhoc/speedtest
 gridSizeForInterpolation	30
@@ -17,6 +19,6 @@ learningRate	10
 minibatchSize	600
 momentum	0.6
 oversampling	4.0
-plotEach	100000
+plotEach	100
 useReLU	True
 width	28

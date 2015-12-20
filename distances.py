@@ -142,6 +142,25 @@ def testMinimalDistanceIndicesFunction(batchSize, sampleSize, featureDim):
     print "total bestDistances GPU", bestDistancesByGPU.sum()
 
 
+# This class is a cheap workaround for the fact that I didn't manage to create
+# a shape-independent constructMinimalDistanceIndicesFunction.
+# It only works if the set of possible shapes is very small, otherwise Theano compilation
+# becomes the bottleneck.
+class ClosestFnFactory:
+    def __init__(self):
+        self.cache = {}
+    def __call__(self, *args):
+        assert len(args)==2
+        sampled, data = args
+        shape = (len(sampled), len(data))
+        candidateCount, targetCount = shape
+        if shape not in self.cache.keys():
+            logg("Adding to ClosestFnFactory cache, shape %s" % str(shape))
+            closest_fn = constructMinimalDistanceIndicesFunction(candidateCount, targetCount)
+            self.cache[shape] = closest_fn
+        else:
+            closest_fn = self.cache[shape]
+        return closest_fn(sampled, data)
 
 
 # A cool little toy learning problem:

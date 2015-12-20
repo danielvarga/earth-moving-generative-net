@@ -167,7 +167,7 @@ def constructTrainFunction(input_var, net, learningRate, momentum, regularizatio
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
-def sampleAndUpdate(train_fn, net_fn, inDim, sampleSource, n, data=None, m=None, closest_fn=None):
+def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, data=None, m=None):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
@@ -187,7 +187,7 @@ def sampleAndUpdate(train_fn, net_fn, inDim, sampleSource, n, data=None, m=None,
     else:
         # TODO We had this cool findGenForData=False experiment here
         # TODO that didn't go anywhere at first, but we shouldn't let it go this easily.
-        bestIndices = closest_fn(sampled, data)
+        bestIndices = closestFnFactory(sampled, data)
         initial = initial[bestIndices]
         sampled = sampled[bestIndices]
         bestDists = np.linalg.norm(data-sampled, axis=1)
@@ -244,7 +244,7 @@ def train(data, validation, params, logger=None):
     regularization = 0.0 if 'regularization' not in params else params.regularization # L2
     train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization)
     net_fn = constructSamplerFunction(input_var, net)
-    closest_fn = distances.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
+    closestFnFactory = distances.ClosestFnFactory()
 
     sampleSource = lambda net_fn, n, inDim: sampleSourceParametrized(net_fn, n, inDim, params.initialSD, params.inBoolDim)
 
@@ -264,8 +264,8 @@ def train(data, validation, params, logger=None):
             # because constructMinimalDistanceIndicesFunction gets n and m as args.
             assert params.minibatchSize==len(dataBatch)
 
-            minibatchDistances = sampleAndUpdate(train_fn, net_fn, params.inDim, sampleSource,
-                                                 n=params.minibatchSize, data=dataBatch, m=m, closest_fn=closest_fn)
+            minibatchDistances = sampleAndUpdate(train_fn, net_fn, closestFnFactory, params.inDim, sampleSource,
+                                                 n=params.minibatchSize, data=dataBatch, m=m)
             epochDistances.append(minibatchDistances)
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()
@@ -284,10 +284,10 @@ def train(data, validation, params, logger=None):
                 visualizedValidation = validation[:visImageCount]
                 visualizedData = data[:visImageCount]
                 trainMean, trainMedian = evaluate.fitAndVis(visualizedData,
-                                              net_fn, closest_fn, sampleSource, params.inDim,
+                                              net_fn, closestFnFactory, sampleSource, params.inDim,
                                               height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
                 validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
-                                              net_fn, closest_fn, sampleSource, params.inDim,
+                                              net_fn, closestFnFactory, sampleSource, params.inDim,
                                               height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
                 print >> logger, "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
                     epoch, trainMean, trainMedian, validationMean, validationMedian)
