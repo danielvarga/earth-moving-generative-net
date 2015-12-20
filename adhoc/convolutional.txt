@@ -18,10 +18,10 @@ initialSD	0.25
 inputDigit	None
 inputType	mnist
 layerNum	3
-learningRate	1.0
+learningRate	0.5
 minibatchSize	1000
-momentum	0.969849416169
+momentum	0.5
 oversampling	8.0
-plotEach	800
+plotEach	100
 useReLU	True
 width	28
