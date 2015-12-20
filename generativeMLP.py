@@ -22,6 +22,7 @@ from nnbase.attrdict import AttrDict
 
 # These are only included to make the unpickling of the autoencoder possible:
 from nnbase.layers import Unpool2DLayer
+from nnbase.shape import ReshapeLayer
 from nnbase.utils import FlipBatchIterator
 
 
@@ -30,6 +31,52 @@ def logg(*ss):
     s = " ".join(map(str,ss))
     sys.stderr.write(s+"\n")
 
+
+def buildConvNet(input_var, layerNum, inDim, hidden, outDim, useReLU, leakiness=0.0):
+    # ('hidden', layers.DenseLayer),
+    # ('unflatten', ReshapeLayer),
+    # ('unpool', Unpool2DLayer),
+    # ('deconv', layers.Conv2DLayer),
+    # ('output_layer', ReshapeLayer),
+    # TODO Copypasted, refactor.
+    if useReLU:
+        if leakiness==0.0:
+            nonlinearity = lasagne.nonlinearities.rectify
+            gain = 'relu'
+        else:
+            nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness)
+            gain = math.sqrt(2/(1+leakiness**2))
+    else:
+        nonlinearity = lasagne.nonlinearities.tanh
+        gain = 1.0
+
+    filter_sizes = 7
+    conv_filters = 32
+    deconv_filters = 32
+    width = 28 # TODO MNIST specific!
+    height = 28
+
+    l_in = lasagne.layers.InputLayer(shape=(None, inDim),
+                                     input_var=input_var)
+    l_hid = lasagne.layers.DenseLayer(
+            l_in, num_units=hidden,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+    hid2_num_units= deconv_filters * (height + filter_sizes - 1) * (width + filter_sizes - 1) / 4
+    l_hid2 = lasagne.layers.DenseLayer(
+            l_hid, num_units=hid2_num_units,
+            nonlinearity=nonlinearity,
+            W=lasagne.init.GlorotUniform(gain=gain))
+    l_unflatten = ReshapeLayer(
+            l_hid2, shape=(([0], deconv_filters, (height + filter_sizes - 1) / 2, (width + filter_sizes - 1) / 2 )))
+    l_unpool = Unpool2DLayer(
+            l_unflatten, ds=(2, 2))
+    l_deconv = lasagne.layers.Conv2DLayer(
+            l_unpool, num_filters=1, filter_size = (filter_sizes, filter_sizes),
+            border_mode="valid", nonlinearity=None)
+    l_output = ReshapeLayer(
+            l_deconv, shape = (([0], -1)))
+    return l_output
 
 def buildNet(input_var, layerNum, inDim, hidden, outDim, useReLU, leakiness=0.0):
     if useReLU:
@@ -180,7 +227,11 @@ def train(data, validation, params, logger=None):
     leakiness = 0.0 if 'reLULeakiness' not in params else params.reLULeakiness
     if not params.useReLU:
         assert leakiness==0.0, "reLULeakiness not allowed for tanh activation"
-    net = buildNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim,
+    if 'convolutional' in params and params.convolutional:
+        net = buildConvNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim,
+                   useReLU=params.useReLU, leakiness=leakiness)
+    else:
+        net = buildNet(input_var, params.layerNum, params.inDim, params.hiddenLayerSize, outDim,
                    useReLU=params.useReLU, leakiness=leakiness)
 
     minibatchCount = len(data)/params.minibatchSize

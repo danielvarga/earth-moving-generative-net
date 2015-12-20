@@ -1,13 +1,13 @@
-# identical to
+# parent adhoc/spearmint-best.txt , the clone of
 # spearmintOutput/hls673-inDim50-layerNum3-lr1.0-mom0.969849416169-n1000-os8.0
-# that produced
-# epoch 4800 trainMean 3.591231 trainMedian 3.657815 validationMean 3.887801 validationMedian 3.889197
-# , but due to probably chance factors, this is a bit worse.
-# this:
+# parent:
 # epoch 4800 trainMean 3.598628 trainMedian 3.688720 validationMean 3.907617 validationMedian 3.926451
+# this:
+# ?
+convolutional	True
 epochCount	4800
 everyNthInput	10
-expName	adhoc/spearmint-best
+expName	adhoc/convolutional
 gridSizeForInterpolation	30
 gridSizeForSampling	20
 height	28
