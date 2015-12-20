@@ -141,10 +141,15 @@ def constructSamplerFunction(input_var, net):
     net_fn = theano.function([input_var], output)
     return net_fn
 
-def constructTrainFunction(input_var, net, learningRate, momentum):
+def constructTrainFunction(input_var, net, learningRate, momentum, regularization):
     output = lasagne.layers.get_output(net)
     data_var = T.matrix('targets')
     loss = lasagne.objectives.squared_error(output, data_var).mean()
+
+    if regularization!=0.0:
+        logg('regularization', regularization)
+        loss += lasagne.regularization.regularize_network_params(net, lasagne.regularization.l2) * regularization
+
     params = lasagne.layers.get_all_params(net, trainable=True)
 
     updates = lasagne.updates.nesterov_momentum(
@@ -236,7 +241,8 @@ def train(data, validation, params, logger=None):
 
     minibatchCount = len(data)/params.minibatchSize
 
-    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum)
+    regularization = 0.0 if 'regularization' not in params else params.regularization # L2
+    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization)
     net_fn = constructSamplerFunction(input_var, net)
     closest_fn = distances.constructMinimalDistanceIndicesFunction(m, params.minibatchSize)
 
