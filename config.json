@@ -1,19 +1,19 @@
 {
     "language"        : "PYTHON",
     "main-file"       : "spearmintTask.py",
-    "experiment-name" : "regularization_initialSD",
+    "experiment-name" : "initials",
     "variables" : {
-        "initialSD" : {
-            "type" : "FLOAT",
+        "inDim" : {
+            "type" : "INT",
             "size" : 1,
-            "min"  : 0.02,
-            "max"  : 1.0
+            "min"  : 1,
+            "max"  : 100
         },
-        "regularization" : {
-            "type" : "FLOAT",
+        "inBoolDim" : {
+            "type" : "INT",
             "size" : 1,
-            "min"  : 0.0,
-            "max"  : 0.0001
+            "min"  : 0,
+            "max"  : 100
         }
     }
 }

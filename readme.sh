@@ -681,3 +681,21 @@ nohup python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmi
 # Carefully check output/00000001.out and spearmintOutput/log.cerr .
 # Carefully check spearmintOutput/*/conf.txt and spearmintOutput/*/log.txt
 # Wait.
+
+# Outcome of experiment:
+# Best one was:
+# ~/spearmintClones/regularization_initialSD/daniel-experiments/kohonen/spearmintOutput/initialSD0.323230707636-regularization6.16919263619e-07/conf.txt
+# that is, initialSD should be ~0.32, regularization should be 6e-07
+# which is so low that I round it down to zero.
+# (The non-validated improvement coming from this setting compared to its parent adhoc/spearmint-leaky.txt is:
+# parent:
+# epoch 4800 trainMean 3.556957 trainMedian 3.631534 validationMean 3.892525 validationMedian 3.911150
+# this:
+# epoch 4800 trainMean 3.614273 trainMedian 3.685415 validationMean 3.877654 validationMedian 3.906008
+
+# Note: nontrivial methodological error, we ask spearmint to optimize for epoch6400, but we look for epoch4800
+# values, which is the usual validation minimum.
+# The optimum that spearmint has found at epoch6400 is 3.869511
+# at initialSD=0.413519 regularization=1e-6
+
+# Now running another one just for inDim inBoolDim at ~/spearmintClones/initials/

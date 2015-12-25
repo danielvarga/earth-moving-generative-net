@@ -379,7 +379,10 @@ def setDefaultParams():
     params.reLULeakiness = 0.01
     params.learningRate = 1.0
     params.momentum = 0.969849416169
-    params.epochCount = 6400
+    # in experiment regularization_initialSD used 6400 here, but that's
+    # not nice to Spearmint, as validation optimum is usually
+    # at 4800, and I don't have early stopping implemented.
+    params.epochCount = 4800
     params.plotEach = 800
     return params
 
