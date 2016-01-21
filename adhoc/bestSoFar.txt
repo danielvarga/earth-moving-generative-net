@@ -1,0 +1,33 @@
+# The parent is ~/spearmintClones/regularization_initialSD/daniel-experiments/kohonen/spearmintOutput/initialSD0.413519287109-regularization7.87353515625e-07/conf.txt
+# that is the best at epoch 6400 of the ~/spearmintClones/regularization_initialSD spearmintRuns.
+# At epoch 4800 the best would be initialSD0.323230707636, but who cares,
+# it's super insensitive to initialSD inside [0.2, 0.6].
+# Removed regularization because it was optimized away already by Spearmint, as it did not help:
+# regularization 7.87353515625e-07 -> 0
+#
+# parent:
+# epoch 4800 trainMean 3.604388 trainMedian 3.666215 validationMean 3.885447 validationMedian 3.866639
+# this:
+# epoch 4800 trainMean 3.551922 trainMedian 3.647972 validationMean 3.893564 validationMedian 3.921978
+epochCount	6400
+everyNthInput	10
+expName	adhoc/bestSoFar
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	673
+inBoolDim	0
+inDim	50
+initialSD	0.413519287109
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1.0
+minibatchSize	1000
+momentum	0.969849416169
+oversampling	8.0
+plotEach	800
+reLULeakiness	0.01
+regularization	0.0
+useReLU	True
+width	28
