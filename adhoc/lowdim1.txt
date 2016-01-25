@@ -1,0 +1,17 @@
+epochCount	16000
+expName	adhoc/lowdim1
+hiddenLayerSize	100
+inBoolDim	0
+inDim	20
+initialSD	0.25
+inputType	ld.halfcircle
+isLowDim	True
+layerNum	3
+learningRate	0.1
+minibatchSize	1000
+momentum	0.6
+oversampling	1.0
+plotEach	10
+trainSize	40000
+useReLU	False
+validSize	10000

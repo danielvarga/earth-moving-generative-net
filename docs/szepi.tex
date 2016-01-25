@@ -4,6 +4,21 @@
 
 \usepackage{amsmath, amsthm, amssymb}
 
+\usepackage{ifthen} % A felteteles vezerleshez.
+\usepackage{color}
+\newboolean{showComments}
+\setboolean{showComments}{true}
+\ifthenelse
+{\boolean{showComments}}
+{
+% Ideiglenes komment, a vegleges valtozatban mar nem lesz benne:
+\newcommand{\wrk}[1]{\textcolor[rgb]{.0,.6,.0}{(\textsl{#1})}}
+}
+{
+% Ilyen, amikor tenyleg nincs benne:
+\newcommand{\wrk}[1]{}
+}
+
 \newcommand{\cF}{\mathbf{F}}
 \newcommand{\cX}{\mathbf{X}}
 \newcommand{\one}{1}
@@ -72,7 +87,7 @@ Az $f$ és a pontsereg együtt ad egy $S_{f,m} = \{f(Y_1),\dots,f(Y_m)\}$ vélet
 
 $L_m(f) = \EE{\int d(x, S_{f,m} ) P(dx)}$
 
-költség empirikus közelítését minimalizálja. Speciel, ha
+költség empirikus közelítését minimalizálja. \wrk{Várjunk csak, ez egy $S_{f,m}$-től függő mennyiség, vagy vegyük a várható értékét, vagy tegyük explicitté ezt a függést.} Speciel, ha
 
 $L_{n,m}(f) = \int d(x, S_{f,m} ) P_n(dx) = \frac1n \sum_{i=1}^n d(X_i, S_{f,m} )$,
 
@@ -83,7 +98,7 @@ Mint a fenti cikk 3.1-es lemmája mutatja,
 
 $L_m(f) = W_1(P, \pi_{S_{f,m}} P )$,
 
-ahol $\pi_S P$ a $P$ mérték képe a $\pi_S: X \to S$ nearest-neighbor map mellett (azaz $\pi_S P$ egy véletlen $X\sim P$ pont $\pi_S(X)$ képének eloszlása $S$-en), és $W_1(P,Q)$ a Wasserstrein-$1$ távolság a $P$ és $Q$ között, ami lényegében a fenti EMD.
+ahol $\pi_S P$ a $P$ mérték képe a $\pi_S: X \to S$ nearest-neighbor map mellett (azaz $\pi_S P$ egy véletlen $X\sim P$ pont $\pi_S(X)$ képének eloszlása $S$-en), és $W_1(P,Q)$ a Wasserstein-$1$ távolság a $P$ és $Q$ között, ami lényegében a fenti EMD.
 
 Ha most $m$ tart a végtelenbe, akkor azt látjuk, hogy a módszer az
 

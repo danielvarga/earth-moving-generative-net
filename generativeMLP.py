@@ -212,22 +212,70 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
     return bestDists
 
 
+def lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger):
+    n, dim = data.shape
+    inDim = params.inDim
+    initial, sampled = sampleSource(net_fn, n, inDim)
+    nnbase.vis.heatmap(sampled, params.expName+"/heatmap"+str(epoch))
+
+
+def highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger):
+    height, width = params.height, params.width
+    expName = params.expName
+
+    # TODO This is mixing the responsibilities of evaluation and visualization:
+    # TODO train_distance and validation_distance are calculated on only visImageCount images.
+    doValidation = True
+    if doValidation:
+        start_time = time.time()
+        visImageCount = params.gridSizeForSampling ** 2
+        visualizedValidation = validation[:visImageCount]
+        visualizedData = data[:visImageCount]
+        trainMean, trainMedian = evaluate.fitAndVis(visualizedData,
+                                      net_fn, closestFnFactory, sampleSource, params.inDim,
+                                      height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
+        validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
+                                      net_fn, closestFnFactory, sampleSource, params.inDim,
+                                      height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
+        print >> logger, "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
+            epoch, trainMean, trainMedian, validationMean, validationMedian)
+        print >> logger, "time elapsed %f" % (time.time() - start_time)
+        logger.flush()
+
+    nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xy"+str(epoch),
+        height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,1))
+    nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/yz"+str(epoch),
+        height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(1,2))
+    nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xz"+str(epoch),
+        height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,2))
+    nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/s"+str(epoch),
+        height, width, fromGrid=False, gridSize=params.gridSizeForSampling, sampleSourceFunction=sampleSource)
+
+    with open(expName+"/som-generator.pkl", 'w') as f:
+        cPickle.dump(net, f)
+
+
 def train(data, validation, params, logger=None):
     if logger is None:
         logger = sys.stdout
-    expName = params.expName
 
-    nnbase.vis.plotImages(data[:params.gridSizeForSampling**2], params.gridSizeForSampling, expName+"/input")
+    isLowDim = "isLowDim" in params and params.isLowDim
 
     # My network works with 1D input.
     data = nnbase.inputs.flattenImages(data)
     validation = nnbase.inputs.flattenImages(validation)
 
-    height, width = params.height, params.width
+    if isLowDim:
+        nnbase.vis.heatmap(data, params.expName+"/input")
+    else:
+        nnbase.vis.plotImages(data[:params.gridSizeForSampling**2], params.gridSizeForSampling, params.expName+"/input")
 
     m = int(params.oversampling*params.minibatchSize)
 
-    outDim = height*width
+    outDim = data.shape[1] # Flattening already happened.
+    if "height" in params:
+        assert params.height * params.width == outDim
+
     input_var = T.matrix('inputs')
     leakiness = 0.0 if 'reLULeakiness' not in params else params.reLULeakiness
     if not params.useReLU:
@@ -275,36 +323,10 @@ def train(data, validation, params, logger=None):
 
         # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
         if epoch % params.plotEach == 0 and epoch != 0:
-            # TODO This is mixing the responsibilities of evaluation and visualization:
-            # TODO train_distance and validation_distance are calculated on only visImageCount images.
-            doValidation = True
-            if doValidation:
-                start_time = time.time()
-                visImageCount = params.gridSizeForSampling ** 2
-                visualizedValidation = validation[:visImageCount]
-                visualizedData = data[:visImageCount]
-                trainMean, trainMedian = evaluate.fitAndVis(visualizedData,
-                                              net_fn, closestFnFactory, sampleSource, params.inDim,
-                                              height, width, params.gridSizeForSampling, name=expName+"/diff_train"+str(epoch))
-                validationMean, validationMedian = evaluate.fitAndVis(visualizedValidation,
-                                              net_fn, closestFnFactory, sampleSource, params.inDim,
-                                              height, width, params.gridSizeForSampling, name=expName+"/diff_validation"+str(epoch))
-                print >> logger, "epoch %d trainMean %f trainMedian %f validationMean %f validationMedian %f" % (
-                    epoch, trainMean, trainMedian, validationMean, validationMedian)
-                print >> logger, "time elapsed %f" % (time.time() - start_time)
-                logger.flush()
-
-            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xy"+str(epoch),
-                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,1))
-            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/yz"+str(epoch),
-                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(1,2))
-            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/xz"+str(epoch),
-                height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,2))
-            nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/s"+str(epoch),
-                height, width, fromGrid=False, gridSize=params.gridSizeForSampling, sampleSourceFunction=sampleSource)
-
-            with open(expName+"/som-generator.pkl", 'w') as f:
-                cPickle.dump(net, f)
+            if isLowDim:
+                lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
+            else:
+                highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
 
     return validationMean # The last calculated one, we don't recalculate.
 
@@ -315,10 +337,12 @@ def setupAndRun(params):
     # with width/height deduced from the input data.
     nnbase.inputs.dumpParams(params, file(params.expName+"/conf.txt", "w"))
 
+    isLowDim = "isLowDim" in params and params.isLowDim
 
     with file(params.expName+"/log.txt", "w") as logger:
-        meanDist, medianDist = evaluate.fitAndVisNNBaselineMain(data, validation, params)
-        print >> logger, "nnbaselineMean %f nnbaselineMedian %f" % (meanDist, medianDist)
+        if not isLowDim:
+            meanDist, medianDist = evaluate.fitAndVisNNBaselineMain(data, validation, params)
+            print >> logger, "nnbaselineMean %f nnbaselineMedian %f" % (meanDist, medianDist)
 
         value = train(data, validation, params, logger)
         print >> logger, "final performance %f" % value
@@ -411,7 +435,7 @@ def spearmintEntry(spearmintParams):
         assert len(v)==1
         # We want int32 and float32, not the 64bit versions provided by spearmint.
         # http://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types/11389998#11389998
-	params[k] = np.asscalar(v[0])
+        params[k] = np.asscalar(v[0])
     params.expName = "spearmintOutput/" + spearmintDirName(spearmintParams)
 
     try:
