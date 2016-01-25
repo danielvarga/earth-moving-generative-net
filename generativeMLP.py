@@ -261,14 +261,15 @@ def train(data, validation, params, logger=None):
 
     isLowDim = "isLowDim" in params and params.isLowDim
 
-    # My network works with 1D input.
-    data = nnbase.inputs.flattenImages(data)
-    validation = nnbase.inputs.flattenImages(validation)
-
     if isLowDim:
         nnbase.vis.heatmap(data, params.expName+"/input")
     else:
+        # Have to do before flattening:
         nnbase.vis.plotImages(data[:params.gridSizeForSampling**2], params.gridSizeForSampling, params.expName+"/input")
+
+    # My network works with 1D input.
+    data = nnbase.inputs.flattenImages(data)
+    validation = nnbase.inputs.flattenImages(validation)
 
     m = int(params.oversampling*params.minibatchSize)
 
