@@ -5,6 +5,7 @@ import os
 import time
 import random
 import math
+from operator import itemgetter
 
 import numpy as np
 
@@ -176,21 +177,36 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
         m = n
 
     initial, sampled = sampleSource(net_fn, m, inDim)
-    bipartiteMatchingBased = False
+    bipartiteMatchingBased = True
     if bipartiteMatchingBased:
-        # Pretty much obsoleted, because it can't be made fast.
-        # Does a full weighted bipartite matching.
-        # Left here for emotional reasons.
-        permutation = kohonen.optimalPairing(sampled, data)
-        initial = initial[permutation]
-        sampled = sampled[permutation]
+        if data.shape[1]==1:
+            # In 1d we can actually solve the weighted bipartite matching
+            # problem, by sorting. Basically that's what Magdon-Ismail and Atiya do.
+            assert len(data)==len(initial)
+            data.sort(axis=0)
+            pairs = sorted(zip(sampled, initial))
+            sampled = np.array(map(itemgetter(0), pairs))
+            initial = np.array(map(itemgetter(1), pairs))
+        else:
+            # Pretty much obsoleted, because it can't be made fast.
+            # Does a full weighted bipartite matching.
+            # Left here for emotional reasons.
+            permutation = kohonen.optimalPairing(sampled, data)
+            initial = initial[permutation]
+            sampled = sampled[permutation]
     else:
         # TODO We had this cool findGenForData=False experiment here
         # TODO that didn't go anywhere at first, but we shouldn't let it go this easily.
-        bestIndices = closestFnFactory(sampled, data)
-        initial = initial[bestIndices]
-        sampled = sampled[bestIndices]
-        bestDists = np.linalg.norm(data-sampled, axis=1)
+        findGenForData = False
+        if findGenForData:
+            bestIndices = closestFnFactory(sampled, data)
+            initial = initial[bestIndices]
+            sampled = sampled[bestIndices]
+        else:
+            bestIndices = closestFnFactory(data, sampled)
+            data = data[bestIndices]
+
+    bestDists = np.linalg.norm(data-sampled, axis=1)
 
     # The idea is that big n is good because matches are close,
     # but big n is also bad because large minibatch sizes are generally bad.
