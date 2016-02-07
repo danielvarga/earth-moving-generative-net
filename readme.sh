@@ -699,3 +699,23 @@ nohup python Spearmint/spearmint/main.py . > spearmintOutput/log.cout 2> spearmi
 # at initialSD=0.413519 regularization=1e-6
 
 # Now running another one just for inDim inBoolDim at ~/spearmintClones/initials/
+
+#########
+# Here I did some experiments with 1d synthetic distributions.
+
+# Bottom line: Right now we can't properly learn even 1d uniform,
+# because it gets this weird bathtub shape as seen here:
+# https://github.com/danielvarga/daniel-experiments/tree/master/kohonen/docs/charts/1d
+
+#########
+# A different game: what's the best distance function between pairs?
+# I've always used L2 squared, but the idea is that whenever the distance is large,
+# we shouldn't be too aggressive in moving, because we might be moving toward an
+# incorrect target anyway.
+#
+# Thus adhoc/conf8.l1loss.txt
+#
+# Turns out it's a trade-off. L1-based samples are nicer looking, but seem
+# to be worse in approximating either the train or the validation samples.
+# They are much less blurry than L2-based samples, which is absolutely to
+# be expected, but good to see in practice.

@@ -26,6 +26,8 @@ from nnbase.layers import Unpool2DLayer
 from nnbase.shape import ReshapeLayer
 from nnbase.utils import FlipBatchIterator
 
+L1_LOSS = "l1"
+L2_SQUARED_LOSS = "l2squared"
 
 
 def logg(*ss):
@@ -142,10 +144,15 @@ def constructSamplerFunction(input_var, net):
     net_fn = theano.function([input_var], output)
     return net_fn
 
-def constructTrainFunction(input_var, net, learningRate, momentum, regularization):
+def constructTrainFunction(input_var, net, learningRate, momentum, regularization, lossType=L2_SQUARED_LOSS):
     output = lasagne.layers.get_output(net)
     data_var = T.matrix('targets')
-    loss = lasagne.objectives.squared_error(output, data_var).mean()
+    if lossType==L1_LOSS:
+        loss = T.abs_(output-data_var).mean()
+    elif lossType==L2_SQUARED_LOSS:
+        loss = lasagne.objectives.squared_error(output, data_var).mean()
+    else:
+        assert False, "unknown similarity loss function: %s" % lossType
 
     if regularization!=0.0:
         logg('regularization', regularization)
@@ -177,7 +184,7 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
         m = n
 
     initial, sampled = sampleSource(net_fn, m, inDim)
-    bipartiteMatchingBased = True
+    bipartiteMatchingBased = False
     if bipartiteMatchingBased:
         if data.shape[1]==1:
             # In 1d we can actually solve the weighted bipartite matching
@@ -197,7 +204,7 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
     else:
         # TODO We had this cool findGenForData=False experiment here
         # TODO that didn't go anywhere at first, but we shouldn't let it go this easily.
-        findGenForData = False
+        findGenForData = True
         if findGenForData:
             bestIndices = closestFnFactory(sampled, data)
             initial = initial[bestIndices]
@@ -307,7 +314,10 @@ def train(data, validation, params, logger=None):
     minibatchCount = len(data)/params.minibatchSize
 
     regularization = 0.0 if 'regularization' not in params else params.regularization # L2
-    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization)
+
+    lossType = params.loss if "loss" in params else L2_SQUARED_LOSS
+
+    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization, lossType)
     net_fn = constructSamplerFunction(input_var, net)
     closestFnFactory = distances.ClosestFnFactory()
 

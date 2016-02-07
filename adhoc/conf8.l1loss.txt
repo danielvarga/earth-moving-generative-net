@@ -1,0 +1,30 @@
+# parent deepDives/conf8.txt
+# same as conf8 but with using L1 distance between pairs in loss function.
+# (Note the larger epoch count, haven't optimized the learning rate yet.)
+# Numerically worse, visually also worse in emulating train and validation.
+# But definitely better looking samples and planar crosscuts.
+# parent:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+# this:
+# epoch 16000 trainMean 3.946111 trainMedian 4.026848 validationMean 4.241784 validationMedian 4.268175
+epochCount	16000
+everyNthInput	10
+expName	adhoc/conf8.l1loss
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+loss	l1
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	50
+useReLU	True
+width	28
