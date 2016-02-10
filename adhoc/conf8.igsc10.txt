@@ -1,0 +1,27 @@
+# parent deepDives/conf8.txt
+# innerGradientStepCount = 10 for-loop around train_fn(initial, data)
+# parent:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+# this:
+# epoch 400 trainMean 3.823610 trainMedian 3.913259 validationMean 4.035612 validationMedian 4.088287
+epochCount	16000
+everyNthInput	10
+expName	adhoc/conf8.igsc10
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	0.25
+innerGradientStepCount	10
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	50
+useReLU	True
+width	28

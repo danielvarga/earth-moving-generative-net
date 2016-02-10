@@ -1,0 +1,29 @@
+# parent adhoc/conf8.igsc10.txt
+# learningRate 10 -> 1
+# To accomodate for the innerGradientStepCount = 10,
+# I decreased the LR tenfold.
+# parent:
+# epoch 400 trainMean 3.823610 trainMedian 3.913259 validationMean 4.035612 validationMedian 4.088287
+# this:
+# epoch 4800 trainMean 3.724095 trainMedian 3.812470 validationMean 4.026276 validationMedian 4.042130
+epochCount	16000
+everyNthInput	10
+expName	adhoc/conf8.igsc10-lr1
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	0.25
+innerGradientStepCount	10
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	50
+useReLU	True
+width	28
