@@ -2,7 +2,7 @@
 # inputDigit None -> 2
 epochCount	16000
 everyNthInput	1
-expName	adhoc/conf8.inDim2
+expName	adhoc/conf8.inDim2.digit2
 gridSizeForInterpolation	100
 gridSizeForSampling	20
 height	28
