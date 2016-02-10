@@ -1,0 +1,22 @@
+# parent adhoc/conf8.inDim2.txt
+# inputDigit None -> 2
+epochCount	16000
+everyNthInput	1
+expName	adhoc/conf8.inDim2
+gridSizeForInterpolation	100
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	2
+inBoolDim	0
+initialSD	0.25
+inputDigit	2
+inputType	mnist
+layerNum	3
+learningRate	1
+minibatchSize	600
+momentum	0.6
+oversampling	1.0
+plotEach	10
+useReLU	True
+width	28

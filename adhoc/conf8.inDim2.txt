@@ -1,0 +1,29 @@
+# parent deepDives/conf8.txt
+# The idea is that we want some pretty xy*.png that shows something similar to
+# what VAE or t-SNE can do with MNIST in 2D.
+# inDim 20 -> 2, gridSizeForInterpolation 30 -> 100, everyNthInput 10 -> 1, plotEach 400 -> 10
+# learningRate 10 -> 1, oversampling 4.0 -> 1.0
+# parent: (irrelevant, though, not comparable)
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+# this:
+# epoch 3600 trainMean 4.897792 trainMedian 4.980886 validationMean 4.813195 validationMedian 4.877148
+epochCount	16000
+everyNthInput	1
+expName	adhoc/conf8.inDim2
+gridSizeForInterpolation	100
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	2
+inBoolDim	0
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1
+minibatchSize	600
+momentum	0.6
+oversampling	1.0
+plotEach	10
+useReLU	True
+width	28
