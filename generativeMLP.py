@@ -175,7 +175,7 @@ def constructTrainFunction(input_var, net, learningRate, momentum, regularizatio
     train_fn = theano.function([input_var, data_var], updates=updates)
     return train_fn
 
-def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, data=None, m=None):
+def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, data=None, m=None, innerGradientStepCount=1):
     if data is None:
         data = kohonen.samplesFromTarget(n) # TODO Refactor, I can't even change the goddamn target distribution in this source file!
     else:
@@ -184,6 +184,9 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
         m = n
 
     initial, sampled = sampleSource(net_fn, m, inDim)
+
+    doDetailed1DVis = True and (data.shape[1]==1)
+
     bipartiteMatchingBased = False
     if bipartiteMatchingBased:
         if data.shape[1]==1:
@@ -215,20 +218,13 @@ def sampleAndUpdate(train_fn, net_fn, closestFnFactory, inDim, sampleSource, n, 
 
     bestDists = np.linalg.norm(data-sampled, axis=1)
 
-    # The idea is that big n is good because matches are close,
-    # but big n is also bad because large minibatch sizes are generally bad.
-    # We throw away data to combine the advantages of big n with small minibatch size.
-    # Don't forget that this means that in an epoch we only see 1/overSamplingFactor
-    # fraction of the dataset. There must be a less heavy-handed way.
-    # TODO This will be retired probably. Until then, don't confuse it with params.oversampling.
-    overSamplingFactor = 1
-    subSample = np.random.choice(len(data), len(data)/overSamplingFactor)
-    initial = initial[subSample]
-    sampled = sampled[subSample]
-    data = data[subSample]
+    for i in range(innerGradientStepCount):
+        # That's where the update happens.
+        train_fn(initial, data)
 
-    # That's where the update happens.
-    train_fn(initial, data)
+    if doDetailed1DVis and random.randrange(100)==0:
+        postSampled = net_fn(initial)
+        nnbase.vis.gradientMap1D(data, sampled, postSampled, "gradient")
 
     # These values are a byproduct of the training step,
     # so they are from _before_ the training, not after it.
@@ -315,6 +311,8 @@ def train(data, validation, params, logger=None):
 
     regularization = 0.0 if 'regularization' not in params else params.regularization # L2
 
+    innerGradientStepCount = 1 if 'innerGradientStepCount' not in params else params.innerGradientStepCount
+
     lossType = params.loss if "loss" in params else L2_SQUARED_LOSS
 
     train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization, lossType)
@@ -340,7 +338,8 @@ def train(data, validation, params, logger=None):
             assert params.minibatchSize==len(dataBatch)
 
             minibatchDistances = sampleAndUpdate(train_fn, net_fn, closestFnFactory, params.inDim, sampleSource,
-                                                 n=params.minibatchSize, data=dataBatch, m=m)
+                                                 n=params.minibatchSize, data=dataBatch, m=m,
+                                                 innerGradientStepCount=innerGradientStepCount)
             epochDistances.append(minibatchDistances)
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()
