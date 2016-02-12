@@ -1,4 +1,4 @@
-sudo apt-get --yes install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git > apt-get.cout 2> apt-get.cerr
+sudo apt-get --yes install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev liblapack-dev git mc vim > apt-get.cout 2> apt-get.cerr
 # Check the latest deb at https://developer.nvidia.com/cuda-downloads
 wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
 sudo dpkg -i cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb 
@@ -30,6 +30,15 @@ sudo pip install git+https://github.com/dnouri/nolearn.git@master#egg=nolearn==0
 mkdir .matplotlib
 echo "backend : Agg" > .matplotlib/matplotlibrc
 
+# cuDNN
+# Login to NVIDIA, get cuDNN 4.0 for Linux x64:
+open https://developer.nvidia.com/cudnn
+# or simply take my cached one:
+wget people.mokk.bme.hu/~daniel/tmp/cudnn-7.0-linux-x64-v4.0-prod.tgz
+cd /usr/local/
+sudo tar zxvf ~/cudnn-7.0-linux-x64-v4.0-prod.tgz
+
+cd
 mkdir .ssh
 ssh-keygen -t rsa -b 4096 -C "daniel.varga@prezi.com"
 eval "$(ssh-agent -s)"
@@ -38,6 +47,7 @@ ssh-add ~/.ssh/id_rsa
 git config --global user.email "daniel.varga@prezi.com"
 git config --global user.name "Daniel Varga"
 
+# Spearmint
 git clone git@github.com:HIPS/Spearmint.git
 sudo pip install -e Spearmint
 sudo apt-get install mongodb
