@@ -1,0 +1,38 @@
+# parent deepDives/conf8.txt
+# loss l2squared -> l2unsquared, learningRate 10 -> 1, plotEach 400 -> 50
+#
+# See https://github.com/danielvarga/daniel-experiments/issues/26 for visualizations.
+#
+# Note the drastically faster convergence. That's not because of
+# some intrinsic nice property of the l2unsquared loss, but rather because
+# the learning rate is accidentally set up way higher.
+# (Looks lower, but they can't be immediately compared because of the sqrt.)
+#
+# validationMean and friends are already calculated with l2unsquared distance,
+# so this method is closer to actually optimizing the evaluation metric.
+#
+# parent:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+# this:
+# epoch 1000 trainMean 3.653183 trainMedian 3.725959 validationMean 3.967728 validationMedian 4.009489
+epochCount	16000
+everyNthInput	10
+expName	adhoc/conf8.l2unsquared
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1.0
+loss	l2unsquared
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	50
+useReLU	True
+width	28

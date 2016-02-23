@@ -28,6 +28,8 @@ from nnbase.utils import FlipBatchIterator
 
 L1_LOSS = "l1"
 L2_SQUARED_LOSS = "l2squared"
+# The weird name is because I really don't want to accidentally use this instead of L2_SQUARED_LOSS:
+L2_UNSQUARED_LOSS = "l2unsquared"
 
 
 def logg(*ss):
@@ -151,6 +153,9 @@ def constructTrainFunction(input_var, net, learningRate, momentum, regularizatio
         loss = T.abs_(output-data_var).mean()
     elif lossType==L2_SQUARED_LOSS:
         loss = lasagne.objectives.squared_error(output, data_var).mean()
+    elif lossType==L2_UNSQUARED_LOSS:
+        lossSqr = ((output-data_var)**2).sum(axis=1)
+        loss = T.sqrt(lossSqr+1e-6).mean() # Fudge constant to avoid numerical stability issues.
     else:
         assert False, "unknown similarity loss function: %s" % lossType
 
