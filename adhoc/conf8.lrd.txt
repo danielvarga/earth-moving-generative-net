@@ -1,0 +1,25 @@
+# parent deepDives/conf8.txt
+# learningRateDecay 1.0 (default) -> 0.9999
+# parent:
+# epoch 4800 trainMean 3.709048 trainMedian 3.779974 validationMean 3.975647 validationMedian 3.986895
+epochCount	16000
+everyNthInput	10
+expName	adhoc/conf8.lrd
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+learningRateDecay	0.9999
+minibatchSize	600
+momentum	0.6
+oversampling	4.0
+plotEach	100
+useReLU	True
+width	28
