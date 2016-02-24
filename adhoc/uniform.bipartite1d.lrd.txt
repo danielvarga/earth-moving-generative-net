@@ -1,0 +1,28 @@
+# BEWARE: bipartiteMatchingBased is not a parameter right now.
+# set     bipartiteMatchingBased = True in the code.
+#
+# parent adhoc/uniform.bipartite1d
+# learningRateDecay 1.0 -> 0.97
+# Haven't fixed the bathtub issue, although converged to a slightly better optimum slightly faster.
+# parent:
+# epoch 200 epochInterimMean 0.036180 epochInterimMedian 0.029334
+# this:
+# epoch 100 epochInterimMean 0.032690 epochInterimMedian 0.026891
+epochCount	200
+expName	adhoc/uniform.bipartite1d.lrd
+hiddenLayerSize	100
+inBoolDim	0
+inDim	1
+initialSD	0.25
+inputType	1d.uniform
+isLowDim	True
+layerNum	3
+learningRate	0.1
+learningRateDecay	0.97
+minibatchSize	1000
+momentum	0.6
+oversampling	1.0
+plotEach	10
+trainSize	40000
+useReLU	False
+validSize	10000
