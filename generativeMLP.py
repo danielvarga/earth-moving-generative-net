@@ -320,7 +320,12 @@ def train(data, validation, params, logger=None):
 
     lossType = params.loss if "loss" in params else L2_SQUARED_LOSS
 
-    train_fn = constructTrainFunction(input_var, net, params.learningRate, params.momentum, regularization, lossType)
+    learningRate_shared = theano.shared(np.array(params.learningRate, dtype=np.float32))
+
+    # Per epoch, which means that this is super-sensitive to epoch size.
+    learningRateDecay = np.float32(1.0 if 'learningRateDecay' not in params else params.learningRateDecay)
+
+    train_fn = constructTrainFunction(input_var, net, learningRate_shared, params.momentum, regularization, lossType)
     net_fn = constructSamplerFunction(input_var, net)
     closestFnFactory = distances.ClosestFnFactory()
 
@@ -354,10 +359,14 @@ def train(data, validation, params, logger=None):
 
         # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
         if epoch % params.plotEach == 0 and epoch != 0:
+            print >> logger, "learningRate", learningRate_shared.get_value()
             if isLowDim:
                 lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
             else:
                 highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
+
+
+        learningRate_shared.set_value( learningRateDecay * learningRate_shared.get_value() )
 
     return validationMean # The last calculated one, we don't recalculate.
 
