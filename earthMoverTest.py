@@ -1,53 +1,73 @@
 import time
 import sys
+import math
 
 import numpy as np
 import theano
 import theano.tensor as T
 import lasagne
+import matplotlib.pyplot as plt
 
 import distances
 
 
 # A cool little toy learning problem:
-# We want to learn a translated 2D standard normal's translation, that's a 2D vector.
-# We generate batchSize samples from this target distribution.
-# We generate sampleSize samples from our current best bet for the distribution.
-# We find the closest generated sample to each target sample.
-# We calculate the sum of distances.
-# That's the loss that we optimize by gradient descent.
-# Note that Theano doesn't even break a sweat when doing backprop
-# through a layer of distance minimization.
-# Of course that's less impressive than it first sounds, because
-# locally, the identity of the nearest target sample never changes.
+# We want to learn a 1D distribution, e.g. uniform on (-1,+1).
+# We want to model it with a gaussian mixture model.
+# (Mixture of k 1D standard normals, parametrized by the k means.)
+# We generate n samples from the target distribution.
+# We generate n samples from our current best bet for the model.
+# We find the pairing that minimizes the summed distance between paired points.
 def toyLearner():
-    batchSize = 2000
-    sampleSize = 2000
-    inDim = 2
-    srng = theano.sandbox.rng_mrg.MRG_RandomStreams(seed=234)
+    n = 2000
+    k = 100
+    sigma = 0.05
+    learningRate = 0.005
+    epochCount = 100
 
-    dataVar = T.matrix("data")
-    initialsVar = srng.normal((sampleSize, inDim))
-    parametersVar = theano.shared(np.zeros(inDim, dtype=np.float32), "parameters")
-    generatedVar = initialsVar + parametersVar # broadcast
+    centers = np.random.normal(size=k).astype(np.float32)
 
+    def generate(centers, n):
+        picks = np.random.randint(k, size=n)
+        currentCenters = centers[picks] # smart indexing
+        generated = currentCenters + sigma * np.random.normal(size=n).astype(np.float32)
+        return generated, picks
 
-    bestXesVar, bestInitialsVar = distances.constructMinimalDistancesVariable(generatedVar, dataVar, initialsVar, sampleSize, batchSize)
+    for epoch in range(epochCount):
+        DIST = "triangle"
+        if DIST=="uniform":
+            data = np.sort(np.random.uniform(low=-1, high=+1, size=(n,)).astype(np.float32))
+        elif DIST=="triangle":
+            bi = np.random.uniform(low=0, high=1, size=(n,2)).astype(np.float32)
+            data = np.max(bi, axis=-1)
+        else:
+            assert False, "unknown distribution"
 
-    deltaVar = bestXesVar - dataVar
-    # mean over samples AND feature coordinates!
-    # Very frightening fact: with .sum() here, the learning process diverges.
-    lossVar = (deltaVar*deltaVar).mean()
+        data.sort()
+        generated, picks = generate(centers, n)
 
-    updates = lasagne.updates.nesterov_momentum(
-            lossVar, [parametersVar], learning_rate=0.2, momentum=0.8)
+        if epoch%5==0:
+            plt.hist(generate(centers, 100000)[0], 50, normed=0, facecolor='green')
+            plt.savefig("emd"+str(epoch)+".pdf")
+            plt.close()
+            plt.scatter(centers[:-1], centers[1:]-centers[:-1])
+            plt.savefig("delta"+str(epoch)+".pdf")
+            plt.close()
 
-    train_fn = theano.function([dataVar], updates=updates)
+        sortedPairs = zip(generated, picks)
+        sortedPairs.sort()
+        triplets = zip(sortedPairs, data)
+        # both are sorted at this point, this pairing is the earth mover's pairing.
+        totalLoss = 0.0
+        for (g,p), d in triplets:
+            # linear derivative, corresponds to L2squared.
+            # math.copysign(1, d-g) would be the derivative of L1=L2unsquared
+            differential = d-g
+            totalLoss += abs(differential) # NOT L2 squared, proper L2!
+            centers[p] += differential * learningRate
+        centers.sort()
+        print "loss", totalLoss
 
-    for epoch in range(1000):
-        data = distances.randomMatrix(batchSize, inDim) + np.array([-5.0, 12.0], dtype=np.float32)
-        train_fn(data)
-        print parametersVar.get_value()
         sys.stdout.flush()
 
 if __name__ == "__main__":
