@@ -1,14 +1,8 @@
-import time
 import sys
 import math
 
 import numpy as np
-import theano
-import theano.tensor as T
-import lasagne
 import matplotlib.pyplot as plt
-
-import distances
 
 
 # A cool little toy learning problem:
