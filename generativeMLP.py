@@ -354,11 +354,10 @@ def train(data, validation, params, logger=None):
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()
         epochInterimMedian = np.median(epochDistances)
-        print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
-        logger.flush()
 
         # Remove the "epoch != 0" if you are trying to catch evaluation crashes.
         if epoch % params.plotEach == 0 and epoch != 0:
+            print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
             print >> logger, "learningRate", learningRate_shared.get_value()
             if isLowDim:
                 lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
