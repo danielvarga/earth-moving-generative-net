@@ -19,7 +19,7 @@ self-explanatory. The main executable takes a configuration file as it's single 
 Such configuration files can be found in the `deepDives` and `adhoc` directories.
 
 ```
-python generativeMLP.py deepDives/conf8.txt
+python earthMover.py deepDives/conf8.txt
 ```
 
 Some visualizations on MNIST and synthetic distributions:
