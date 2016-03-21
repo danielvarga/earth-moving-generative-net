@@ -1,4 +1,4 @@
-# Earth mover generative net
+# Earth moving generative net
 
 This is a neural network model capable of learning high dimensional probability distributions by sampling them.
 Its generative model is the most commonly used one: It samples from some simple fixed prior distribution,
@@ -39,4 +39,6 @@ Applying the transformation f to a fixed input plane:
 Finding the "right" parametrization for a simple synthetic distribution:
 
 ![Clock](http://people.mokk.bme.hu/~daniel/kohonen/clock1-sd1.0/input.png)
+<a href="url"><img src="http://url.to/image.png" align="left" height="48" width="48" ></a>
+
 ![Generated](http://people.mokk.bme.hu/~daniel/kohonen/clock1-sd1.0/xy200.png)
