@@ -32,13 +32,12 @@ Approximating unseen samples:
 
 ![Approximating unseen samples from MNIST](http://people.mokk.bme.hu/~daniel/kohonen/conf8/diff_validation5600.png)
 
-Applying the transformation f to a fixed input plane:
+Applying the transformation to a fixed input plane:
 
-![Applying the transformation f to a fixed input plane](http://people.mokk.bme.hu/~daniel/kohonen/conf8/xy5600.png)
+![Applying the transformation to a fixed input plane](http://people.mokk.bme.hu/~daniel/kohonen/conf8/xy5600.png)
 
 Finding the "right" parametrization for a simple synthetic distribution:
 
 ![Clock](http://people.mokk.bme.hu/~daniel/kohonen/clock1-sd1.0/input.png)
-<a href="url"><img src="http://url.to/image.png" align="left" height="48" width="48" ></a>
 
 ![Generated](http://people.mokk.bme.hu/~daniel/kohonen/clock1-sd1.0/xy200.png)
