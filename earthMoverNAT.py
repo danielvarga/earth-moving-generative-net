@@ -205,7 +205,6 @@ def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutati
     latentBatch = latent[masterPermutation[dataIndices]]
     fakeBatch = net_fn(latentBatch)
     bestDists = averageDistance(dataBatch, fakeBatch)
-    print >> logger, "before permutation batch averageDistance", 
 
     doDetailed1DVis = True and (data.shape[1]==1)
 
@@ -229,7 +228,7 @@ def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutati
     verify = True
     if verify:
         fakeBatch = net_fn(latentBatch)
-        print >> logger, "after permutation batch averageDistance", averageDistance(dataBatch, fakeBatch)
+        print >> logger, "averageDistance before %f after %f " % (bestDists, averageDistance(dataBatch, fakeBatch))
     else:
         fakeBatch = None # not to accidentally use, it's invalidated
 
@@ -253,7 +252,7 @@ def lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, samp
     nnbase.vis.heatmap(sampled, params.expName+"/heatmap"+str(epoch))
 
 
-def highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger):
+def highDimFitAndVis(data, validation, latent, masterPermutation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger):
     height, width = params.height, params.width
     expName = params.expName
 
@@ -284,6 +283,14 @@ def highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sam
         height, width, fromGrid=True, gridSize=params.gridSizeForInterpolation, plane=(0,2))
     nnbase.vis.plotSampledImages(net_fn, params.inDim, expName+"/s"+str(epoch),
         height, width, fromGrid=False, gridSize=params.gridSizeForSampling, sampleSourceFunction=sampleSource)
+
+    anchoredLatent = latent[masterPermutation[:params.gridSizeForSampling**2]]
+    print "anchoredLatent", anchoredLatent.shape, anchoredLatent
+    anchored = net_fn(anchoredLatent)
+    anchored = anchored.reshape((-1, height, width))
+    print "anchored", anchored.shape, anchored
+
+    nnbase.vis.plotImages(anchored, params.gridSizeForSampling, params.expName+"/reproduce"+str(epoch))
 
     with open(expName+"/som-generator.pkl", 'w') as f:
         cPickle.dump(net, f)
@@ -375,9 +382,9 @@ def train(data, validation, params, logger=None):
             print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
             print >> logger, "learningRate", learningRate_shared.get_value()
             if isLowDim:
-                lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
+                lowDimFitAndVis(data, validation, latent, masterPermutation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
             else:
-                highDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
+                highDimFitAndVis(data, validation, latent, masterPermutation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)
 
 
         learningRate_shared.set_value( learningRateDecay * learningRate_shared.get_value() )
