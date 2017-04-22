@@ -1,0 +1,20 @@
+# parent deepDives/conf8.txt
+epochCount	16000
+everyNthInput	10
+expName	deepDives/nat1
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	10
+inBoolDim	0
+initialSD	1.0
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	1
+minibatchSize	64
+momentum	0.6
+plotEach	1
+useReLU	True
+width	28
