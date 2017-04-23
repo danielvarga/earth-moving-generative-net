@@ -1,0 +1,25 @@
+# parent conf8bi
+# THE ONLY DIFFERENCE IS IN CODE, bipartiteMatchingBased = False
+# compared to nat6, it's basically indentical, but without the noise-as-target trick,
+# and with greedy matching unlike parent conf8bi
+epochCount	1000
+everyNthInput	1
+expName	deepDives/conf8nonbi
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inBoolDim	0
+inDim	20
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	64
+momentum	0.6
+oversampling	1.0
+plotEach	1
+reLULeakiness	0.1
+useReLU	True
+width	28

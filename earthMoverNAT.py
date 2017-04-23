@@ -219,13 +219,13 @@ def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutati
         batchPermutation = np.array(kohonen.optimalPairing(fakeBatch, dataBatch))
 
     fixedPointRatio = float(np.sum(batchPermutation == np.arange(n))) / n
-    print >> logger, "fixedPointRatio", fixedPointRatio
+    # print >> logger, "fixedPointRatio", fixedPointRatio
 
     masterPermutation[dataIndices] = masterPermutation[dataIndices[batchPermutation]]
 
     latentBatch = latent[masterPermutation[dataIndices]] # recalculated
 
-    verify = True
+    verify = False
     if verify:
         fakeBatch = net_fn(latentBatch)
         print >> logger, "averageDistance before %f after %f " % (bestDists, averageDistance(dataBatch, fakeBatch))
@@ -242,7 +242,7 @@ def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutati
 
     # These values are a byproduct of the training step,
     # so they are from _before_ the training, not after it.
-    return bestDists
+    return bestDists, fixedPointRatio
 
 
 def lowDimFitAndVis(data, validation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger):
@@ -285,10 +285,8 @@ def highDimFitAndVis(data, validation, latent, masterPermutation, epoch, net, ne
         height, width, fromGrid=False, gridSize=params.gridSizeForSampling, sampleSourceFunction=sampleSource)
 
     anchoredLatent = latent[masterPermutation[:params.gridSizeForSampling**2]]
-    print "anchoredLatent", anchoredLatent.shape, anchoredLatent
     anchored = net_fn(anchoredLatent)
     anchored = anchored.reshape((-1, height, width))
-    print "anchored", anchored.shape, anchored
 
     nnbase.vis.plotImages(anchored, params.gridSizeForSampling, params.expName+"/reproduce"+str(epoch))
 
@@ -362,8 +360,9 @@ def train(data, validation, params, logger=None):
     for epoch in range(params.epochCount+1):
         allIndices = np.random.permutation(N)
         epochDistances = []
+        fixedPointRatios = []
         for i in range(minibatchCount):
-            print "epoch", epoch, "minibatch", i, "/", minibatchCount
+            # print "epoch", epoch, "minibatch", i, "/", minibatchCount
             dataIndices = allIndices[i*params.minibatchSize:(i+1)*params.minibatchSize]
 
             # The issue with using a minibatchSize that's not a divisor of corpus size
@@ -371,15 +370,19 @@ def train(data, validation, params, logger=None):
             # because constructMinimalDistanceIndicesFunction gets n and m as args.
             assert params.minibatchSize==len(dataIndices)
 
-            minibatchDistances = sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutation, innerGradientStepCount=innerGradientStepCount)
+            minibatchDistances, fixedPointRatio = sampleAndUpdate(
+                train_fn, net_fn, data, latent, dataIndices, masterPermutation,
+                innerGradientStepCount=innerGradientStepCount)
 
             epochDistances.append(minibatchDistances)
+            fixedPointRatios.append(fixedPointRatio)
         epochDistances = np.array(epochDistances)
         epochInterimMean = epochDistances.mean()
         epochInterimMedian = np.median(epochDistances)
+        epochFixedPointRatio = np.mean(np.array(fixedPointRatios))
 
         if epoch % params.plotEach == 0:
-            print >> logger, "epoch %d epochInterimMean %f epochInterimMedian %f" % (epoch, epochInterimMean, epochInterimMedian)
+            print >> logger, "epoch %d epochFixedPointRatio %f epochInterimMean %f epochInterimMedian %f" % (epoch, epochFixedPointRatio, epochInterimMean, epochInterimMedian)
             print >> logger, "learningRate", learningRate_shared.get_value()
             if isLowDim:
                 lowDimFitAndVis(data, validation, latent, masterPermutation, epoch, net, net_fn, closestFnFactory, sampleSource, params, logger)

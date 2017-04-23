@@ -1,0 +1,22 @@
+# parent deepDives/nat4.txt
+# inDim 5 -> 20
+epochCount	1000
+everyNthInput	1
+expName	deepDives/nat6
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inDim	20
+inBoolDim	0
+initialSD	1.0
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	64
+momentum	0.6
+plotEach	1
+reLULeakiness	0.1
+useReLU	True
+width	28

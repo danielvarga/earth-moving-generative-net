@@ -5,6 +5,7 @@ import random
 import sys
 import cPickle
 import gzip
+from scipy.optimize import linear_sum_assignment
 
 import next_permutation
 import munkres
@@ -84,13 +85,8 @@ def distanceMatrix(x, y):
 
 def optimalPairing(x, y):
     distances = distanceMatrix(x,y)
-    perm = munkres.Munkres().compute(distances)
-    p = []
-    for i,(a,b) in enumerate(perm):
-        assert i==a
-        p.append(b)
-    # assert p==slowOptimalPairing(x,y)
-    return p
+    _, perm = linear_sum_assignment(distances)
+    return perm
 
 
 class LocalMapping(object):

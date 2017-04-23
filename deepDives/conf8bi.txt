@@ -1,0 +1,26 @@
+# parent conf8vsnat6
+# minibatchSize 600 -> 64 oversampling 4 -> 1 reLULeakiness 0 -> 0.1
+# BUT THE MAIN DIFFERENCE IS IN CODE, bipartiteMatchingBased = True
+# compared to nat6:
+# same topology, LR, minibatchsize, oversampling.
+epochCount	1000
+everyNthInput	1
+expName	deepDives/conf8bi
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inBoolDim	0
+inDim	20
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	64
+momentum	0.6
+oversampling	1.0
+plotEach	1
+reLULeakiness	0.1
+useReLU	True
+width	28
