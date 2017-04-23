@@ -1,0 +1,26 @@
+# parent conf8vsnat6
+# oversampling 4 -> 1 reLULeakiness 1 -> 0.1
+# compared to nat6:
+# initialSD, minibatchSize
+# don't compare to conf8vsnat6, both oversampling and reLULeakiness changed
+epochCount	1000
+everyNthInput	1
+expName	deepDives/conf8noos
+gridSizeForInterpolation	30
+gridSizeForSampling	20
+height	28
+hiddenLayerSize	600
+inBoolDim	0
+inDim	20
+initialSD	0.25
+inputDigit	None
+inputType	mnist
+layerNum	3
+learningRate	10
+minibatchSize	600
+momentum	0.6
+oversampling	1.0
+plotEach	40
+reLULeakiness	0.1
+useReLU	True
+width	28

@@ -1,5 +1,6 @@
 # parent deepDives/nat4.txt
 # inDim 5 -> 20
+# nat6b is the same, older, but that was stopped before epoch 1000.
 epochCount	1000
 everyNthInput	1
 expName	deepDives/nat6
