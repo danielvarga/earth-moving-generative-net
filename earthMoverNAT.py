@@ -5,6 +5,7 @@ import os
 import time
 import random
 import math
+from collections import defaultdict
 from operator import itemgetter
 
 import numpy as np
@@ -194,8 +195,21 @@ def constructTrainFunction(input_var, net, learningRate, momentum, regularizatio
 def averageDistance(dataBatch, fakeBatch):
     return np.mean(np.linalg.norm(dataBatch - fakeBatch, axis=1))
 
+
+def statisticsOfAssignment(assignment, maximumValue):
+    counts = {}
+    for p in range(maximumValue):
+        counts[p] = 0
+    for p in assignment:
+        counts[p] += 1
+    hist = defaultdict(int)
+    for p, c in counts.iteritems():
+        hist[c] += 1
+    preimageSizeCounts = sorted(hist.iteritems())
+    return preimageSizeCounts
+
 # latent[masterPermutation[i]] is the pair of data[i]
-def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutation, innerGradientStepCount=1, logger=None):
+def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutation, innerGradientStepCount=1, logger=None, closestFnFactory=None):
     if logger is None:
         logger = sys.stdout
 
@@ -208,20 +222,34 @@ def sampleAndUpdate(train_fn, net_fn, data, latent, dataIndices, masterPermutati
 
     doDetailed1DVis = True and (data.shape[1]==1)
 
-    if data.shape[1]==1:
-        assert False, "unimplemented"
-        # In 1d we can actually solve the weighted bipartite matching
-        # problem, by sorting. Basically that's what Magdon-Ismail and Atiya do.
+    bipartiteMatchingBased = False
+    greedyBipartite = True
+
+    if bipartiteMatchingBased:
+        if data.shape[1]==1:
+            assert False, "unimplemented"
+            # In 1d we can actually solve the weighted bipartite matching
+            # problem, by sorting. Basically that's what Magdon-Ismail and Atiya do.
+        else:
+            if greedyBipartite:
+                batchPermutation = np.array(kohonen.greedyPairing(fakeBatch, dataBatch))
+            else:
+                batchPermutation = np.array(kohonen.optimalPairing(fakeBatch, dataBatch))
     else:
-        # Pretty much obsoleted, because it can't be made fast.
-        # Does a full weighted bipartite matching.
-        # Left here for emotional reasons.
-        batchPermutation = np.array(kohonen.optimalPairing(fakeBatch, dataBatch))
+        # Misnomer, not really a permutation!
+        batchPermutation = closestFnFactory(fakeBatch, dataBatch)
+        # fakeBatch[batchPermutation][i] is the closest fake to dataBatch[i]
+        preimageSizeCounts = statisticsOfAssignment(batchPermutation, len(fakeBatch))
+        print >> logger, "batch preimageSizeCounts", preimageSizeCounts
 
     fixedPointRatio = float(np.sum(batchPermutation == np.arange(n))) / n
     # print >> logger, "fixedPointRatio", fixedPointRatio
 
     masterPermutation[dataIndices] = masterPermutation[dataIndices[batchPermutation]]
+
+    if not bipartiteMatchingBased:
+        preimageSizeCounts = statisticsOfAssignment(masterPermutation, len(latent))
+        print >> logger, "master preimageSizeCounts", preimageSizeCounts
 
     latentBatch = latent[masterPermutation[dataIndices]] # recalculated
 
@@ -372,7 +400,7 @@ def train(data, validation, params, logger=None):
 
             minibatchDistances, fixedPointRatio = sampleAndUpdate(
                 train_fn, net_fn, data, latent, dataIndices, masterPermutation,
-                innerGradientStepCount=innerGradientStepCount)
+                innerGradientStepCount=innerGradientStepCount, closestFnFactory=closestFnFactory)
 
             epochDistances.append(minibatchDistances)
             fixedPointRatios.append(fixedPointRatio)

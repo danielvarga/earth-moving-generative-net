@@ -88,6 +88,9 @@ def optimalPairing(x, y):
     _, perm = linear_sum_assignment(distances)
     return perm
 
+def greedyPairing(x, y):
+    distances = distanceMatrix(x,y)
+    raise "unimplemented"
 
 class LocalMapping(object):
     KERNEL_SIZE = 0.33 # Ad hoc is an understatement
