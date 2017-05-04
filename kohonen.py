@@ -5,6 +5,7 @@ import random
 import sys
 import cPickle
 import gzip
+from collections import defaultdict
 from scipy.optimize import linear_sum_assignment
 
 import next_permutation
@@ -72,6 +73,14 @@ def slowOptimalPairing(x,y):
             bestP = p
     return bestP
 
+
+# distanceMatrix(x, y)[j, i] == np.linalg.norm(x[i]-y[j])
+# Note the reversing of indices!
+# x = np.random.normal(size=(n,l))
+# y = np.random.normal(size=(m,l))
+# d = distanceMatrix(x, y)
+# d.shape
+# (m, n)
 def distanceMatrix(x, y):
     xL2S = np.sum(x*x,axis=-1)
     yL2S = np.sum(y*y,axis=-1)
@@ -84,13 +93,40 @@ def distanceMatrix(x, y):
     return distances
 
 def optimalPairing(x, y):
-    distances = distanceMatrix(x,y)
+    distances = distanceMatrix(x, y)
     _, perm = linear_sum_assignment(distances)
+    assert len(perm) == len(x)
+    # distances[perm[i], i] is the optimal distance for x[i] among y[j]s.
+    # distances[perm, range(len(x))].sum() is the minimal possible total distance.
+    # That's a matching, not to be confused with the non-bijective closest y[j] assignment.
     return perm
 
 def greedyPairing(x, y):
-    distances = distanceMatrix(x,y)
-    raise "unimplemented"
+    perm = - np.ones(len(x), dtype=int)
+    distances = distanceMatrix(x, y)
+    # print "D", distances
+    done = set()
+    while perm.min() < 0:
+        closestYIndices = distances.argmin(axis=0)
+        # print closestYIndices
+        # print "closest", distances[closestYIndices, range(len(x))]
+        assert len(closestYIndices) == len(x)
+        s = defaultdict(set)
+        for i, j in enumerate(closestYIndices):
+            if i not in done:
+                s[j].add(i)
+        # print s
+        for j, preimage in s.iteritems():
+            preimage = sorted(preimage)
+            localI = distances[j, preimage].argmin()
+            i = preimage[localI]
+            raise "something really messed up here"
+            perm[j] = i
+            # print "added col", i, "row", j
+            distances[j, :] = np.inf
+            distances[:, i] = np.inf
+            done.add(i)
+    return perm
 
 class LocalMapping(object):
     KERNEL_SIZE = 0.33 # Ad hoc is an understatement
