@@ -93,7 +93,7 @@ def distanceMatrix(x, y):
     return distances
 
 def optimalPairing(x, y):
-    distances = distanceMatrix(x, y)
+    distances = distanceMatrix(y, x)
     _, perm = linear_sum_assignment(distances)
     assert len(perm) == len(x)
     # distances[perm[i], i] is the optimal distance for x[i] among y[j]s.
