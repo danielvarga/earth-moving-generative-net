@@ -120,8 +120,8 @@ def greedyPairing(x, y):
             preimage = sorted(preimage)
             localI = distances[j, preimage].argmin()
             i = preimage[localI]
-            raise "something really messed up here"
-            perm[j] = i
+            #raise "something really messed up here"
+            perm[i] = j
             # print "added col", i, "row", j
             distances[j, :] = np.inf
             distances[:, i] = np.inf
