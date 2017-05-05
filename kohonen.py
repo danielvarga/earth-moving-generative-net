@@ -92,10 +92,13 @@ def distanceMatrix(x, y):
     distances = np.sqrt(np.abs(squaredDistances))
     return distances
 
+# !!! only works if len(y) <= len(x)
 def optimalPairing(x, y):
-    distances = distanceMatrix(y, x)
+    assert len(y) <= len(x)
+    distances = distanceMatrix(x, y)
+    assert distances.shape == (len(y), len(x))
     _, perm = linear_sum_assignment(distances)
-    assert len(perm) == len(x)
+    assert len(perm) == len(y)
     # distances[perm[i], i] is the optimal distance for x[i] among y[j]s.
     # distances[perm, range(len(x))].sum() is the minimal possible total distance.
     # That's a matching, not to be confused with the non-bijective closest y[j] assignment.
