@@ -9,7 +9,6 @@ from collections import defaultdict
 from scipy.optimize import linear_sum_assignment
 
 import next_permutation
-import munkres
 
 def pretty(m):
     for row in m:
@@ -93,41 +92,47 @@ def distanceMatrix(x, y):
     return distances
 
 # !!! only works if len(y) <= len(x)
-def optimalPairing(x, y):
+# !!! the returned permutation is to be applied on x
+def optimalPairing(x, y, distances=None):
     assert len(y) <= len(x)
-    distances = distanceMatrix(x, y)
+    if distances is None:
+        distances = distanceMatrix(x, y)
     assert distances.shape == (len(y), len(x))
     _, perm = linear_sum_assignment(distances)
     assert len(perm) == len(y)
-    # distances[perm[i], i] is the optimal distance for x[i] among y[j]s.
-    # distances[perm, range(len(x))].sum() is the minimal possible total distance.
-    # That's a matching, not to be confused with the non-bijective closest y[j] assignment.
+    # distances[i, perm[i]] is the optimal distance for y[i] among x[j]s.
+    # distances[range(len(y)), perm].sum() is the minimal possible total distance.
+    # That's a matching, not to be confused with the non-bijective closest x[j] assignment.
     return perm
 
-def greedyPairing(x, y):
-    perm = - np.ones(len(x), dtype=int)
-    distances = distanceMatrix(x, y)
-    # print "D", distances
+# distances is len
+def greedyPairing(x, y, distances=None):
+    assert len(y) <= len(x)
+    if distances is None:
+        distances = distanceMatrix(x, y)
+    else:
+        distances = distances.copy()
+    assert distances.shape == (len(y), len(x))
+    perm = - np.ones(len(y), dtype=int)
     done = set()
     while perm.min() < 0:
-        closestYIndices = distances.argmin(axis=0)
-        # print closestYIndices
-        # print "closest", distances[closestYIndices, range(len(x))]
-        assert len(closestYIndices) == len(x)
+        closestXIndices = distances.argmin(axis=1)
+#        print closestXIndices
+#        print "closest", distances[closestXIndices, range(len(x))]
+        assert len(closestXIndices) == len(y)
         s = defaultdict(set)
-        for i, j in enumerate(closestYIndices):
+        for i, j in enumerate(closestXIndices):
             if i not in done:
                 s[j].add(i)
         # print s
         for j, preimage in s.iteritems():
             preimage = sorted(preimage)
-            localI = distances[j, preimage].argmin()
+            localI = distances[preimage, j].argmin()
             i = preimage[localI]
-            #raise "something really messed up here"
             perm[i] = j
             # print "added col", i, "row", j
-            distances[j, :] = np.inf
-            distances[:, i] = np.inf
+            distances[i, :] = np.inf
+            distances[:, j] = np.inf
             done.add(i)
     return perm
 
